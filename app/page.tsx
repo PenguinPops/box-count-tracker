@@ -1,213 +1,116 @@
+// app/page.tsx
 import { MainNav } from "@/components/nav"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { getStatsByCompany, getStatsByMonth, getEntries, isDatabaseInitialized } from "@/lib/db"
-import { formatCurrency } from "@/lib/utils"
+import { getStatsByCompany, getStatsByMonth, getEntries, isDatabaseInitialized, getSetting } from "@/lib/db"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, BarChart3 } from "lucide-react"
-import { DatabaseInitializer } from "@/components/db-initializer"
+import { Capitalise } from "@/lib/utils"
+import { t, Lang } from "@/lib/i18n"
+import { Suspense } from "react"
+import { BalanceCards } from "@/components/dashboard/balance-cards"
+import { CompanyStats } from "@/components/dashboard/company-stats"
+import { TableSkeleton, CardSkeleton } from "@/components/skeleton"
+import { MonthlyStats } from "@/components/dashboard/monthly-stats"
+import { RecentEntries } from "@/components/dashboard/recent-entries"
 
-export default async function Home() {
-  const dbInitialized = await isDatabaseInitialized()
+export default function Home() {
+  return (
+    <DashboardContent />
+  )
+}
 
-  if (!dbInitialized) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <MainNav />
-        <main className="flex-1 p-8 flex items-center justify-center">
-          <DatabaseInitializer />
-        </main>
-      </div>
-    )
+async function DashboardContent() {
+
+  const includeStartingBalancesSetting = await getSetting("includeStartingBalances")
+  const languageSetting = await getSetting("language")
+  const language: Lang = languageSetting === "pl" ? "pl" : "en"
+  
+  const includeStartingBalances = includeStartingBalancesSetting !== "false"
+  const companyStatsRaw = await getStatsByCompany(includeStartingBalances)
+  const companyStats = companyStatsRaw.map(stat => ({
+    company: String(stat.company),
+    total_e1in: Number(stat.total_e1in ?? 0),
+    total_e1out: Number(stat.total_e1out ?? 0),
+    total_e2in: Number(stat.total_e2in ?? 0),
+    total_e2out: Number(stat.total_e2out ?? 0),
+  }))
+  const monthlyStatsRaw = await getStatsByMonth(includeStartingBalances)
+  const monthlyStats = monthlyStatsRaw.map(stat => ({
+    month: String(stat.month),
+    total_e1in: Number(stat.total_e1in ?? 0),
+    total_e1out: Number(stat.total_e1out ?? 0),
+    total_e2in: Number(stat.total_e2in ?? 0),
+    total_e2out: Number(stat.total_e2out ?? 0),
+  }))
+  const recentEntriesRaw = await getEntries(5)
+  const recentEntries = recentEntriesRaw.map(entry => ({
+    id: String(entry.id),
+    entry_date: String(entry.entry_date),
+    company: String(entry.company),
+    e2in: Number(entry.e2in),
+    e1in: Number(entry.e1in),
+    e2out: Number(entry.e2out),
+    e1out: Number(entry.e1out),
+  }))
+
+  const totals = {
+    E1in: companyStats.reduce((sum, stat) => sum + Number(stat.total_e1in ?? 0), 0),
+    E2in: companyStats.reduce((sum, stat) => sum + Number(stat.total_e2in ?? 0), 0),
+    E1out: companyStats.reduce((sum, stat) => sum + Number(stat.total_e1out ?? 0), 0),
+    E2out: companyStats.reduce((sum, stat) => sum + Number(stat.total_e2out ?? 0), 0),
   }
 
-  const companyStats = await getStatsByCompany()
-  const monthlyStats = await getStatsByMonth()
-  const recentEntries = await getEntries(5)
-
-  // Calculate totals
-  const totals = {
-    value1: companyStats.reduce((sum, stat) => sum + Number(stat.total_value1), 0),
-    value2: companyStats.reduce((sum, stat) => sum + Number(stat.total_value2), 0),
-    value3: companyStats.reduce((sum, stat) => sum + Number(stat.total_value3), 0),
-    value4: companyStats.reduce((sum, stat) => sum + Number(stat.total_value4), 0),
-    balance1: companyStats.reduce((sum, stat) => sum + Number(stat.total_balance1), 0),
-    balance2: companyStats.reduce((sum, stat) => sum + Number(stat.total_balance2), 0),
+  const balances = {
+    E1: totals.E1out - totals.E1in,
+    E2: totals.E2out - totals.E2in,
+    total: totals.E1out + totals.E2out - totals.E1in - totals.E2in,
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <MainNav />
-      <main className="flex-1 p-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">Box Count Dashboard</h1>
-          <div className="flex space-x-2">
-            <Link href="/entries/new">
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                New Entry
-              </Button>
-            </Link>
-            <Link href="/statistics">
-              <Button variant="outline">
-                <BarChart3 className="mr-2 h-4 w-4" />
-                View All Statistics
-              </Button>
-            </Link>
-          </div>
-        </div>
+    <>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Total Value 1</CardTitle>
-              <CardDescription>Sum of all Value 1 entries</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{formatCurrency(totals.value1)}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Total Value 3</CardTitle>
-              <CardDescription>Sum of all Value 3 entries</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{formatCurrency(totals.value3)}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle>Net Balance 1</CardTitle>
-              <CardDescription>Sum of all Balance 1 entries</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-3xl font-bold ${totals.balance1 >= 0 ? "text-green-600" : "text-red-600"}`}>
-                {formatCurrency(totals.balance1)}
-              </div>
-            </CardContent>
-          </Card>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">{t(language, "dashboardTitle")}</h1>
+        <div className="flex space-x-2">
+          <Link href="/entries/new">
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              {t(language, "newEntry")}
+            </Button>
+          </Link>
+          <Link href="/statistics">
+            <Button variant="outline">
+              <BarChart3 className="mr-2 h-4 w-4" />
+              {t(language, "viewAllStatistics")}
+            </Button>
+          </Link>
         </div>
+      </div>
 
-        <div className="grid gap-6 md:grid-cols-2 mb-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Company Statistics</CardTitle>
-              <CardDescription>Financial data by company</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {companyStats.map((stat) => (
-                  <div key={stat.company} className="flex items-center justify-between">
-                    <div className="font-medium">{stat.company}</div>
-                    <div className="flex space-x-4">
-                      <div>
-                        <span className="text-sm text-muted-foreground">Value 1:</span>{" "}
-                        <span className="font-medium">{formatCurrency(stat.total_value1)}</span>
-                      </div>
-                      <div>
-                        <span className="text-sm text-muted-foreground">Balance 1:</span>{" "}
-                        <span
-                          className={`font-medium ${Number(stat.total_balance1) >= 0 ? "text-green-600" : "text-red-600"}`}
-                        >
-                          {formatCurrency(stat.total_balance1)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Monthly Statistics</CardTitle>
-              <CardDescription>Financial data by month</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {monthlyStats.slice(0, 5).map((stat) => (
-                  <div key={stat.month} className="flex items-center justify-between">
-                    <div className="font-medium">{stat.month}</div>
-                    <div className="flex space-x-4">
-                      <div>
-                        <span className="text-sm text-muted-foreground">Value 1:</span>{" "}
-                        <span className="font-medium">{formatCurrency(stat.total_value1)}</span>
-                      </div>
-                      <div>
-                        <span className="text-sm text-muted-foreground">Balance 1:</span>{" "}
-                        <span
-                          className={`font-medium ${Number(stat.total_balance1) >= 0 ? "text-green-600" : "text-red-600"}`}
-                        >
-                          {formatCurrency(stat.total_balance1)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      <Suspense fallback={<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-6">
+        <CardSkeleton />
+        <CardSkeleton />
+        <CardSkeleton />
+      </div>}>
+        <BalanceCards language={language} balances={balances} />
+      </Suspense>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Entries</CardTitle>
-            <CardDescription>Latest financial entries</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {recentEntries.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-4">Date</th>
-                      <th className="text-left py-3 px-4">Company</th>
-                      <th className="text-right py-3 px-4">Value 1</th>
-                      <th className="text-right py-3 px-4">Value 3</th>
-                      <th className="text-right py-3 px-4">Balance 1</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentEntries.map((entry) => (
-                      <tr key={entry.id} className="border-b">
-                        <td className="py-3 px-4">{new Date(entry.entry_date).toLocaleDateString()}</td>
-                        <td className="py-3 px-4">{entry.company}</td>
-                        <td className="text-right py-3 px-4">{formatCurrency(entry.value1)}</td>
-                        <td className="text-right py-3 px-4">{formatCurrency(entry.value3)}</td>
-                        <td
-                          className={`text-right py-3 px-4 ${Number(entry.balance1) >= 0 ? "text-green-600" : "text-red-600"}`}
-                        >
-                          {formatCurrency(entry.balance1)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <p className="text-muted-foreground">No entries yet. Add your first entry to get started.</p>
-                <Link href="/entries/new">
-                  <Button variant="outline" className="mt-2">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add First Entry
-                  </Button>
-                </Link>
-              </div>
-            )}
-            {recentEntries.length > 0 && (
-              <div className="mt-4 flex justify-end">
-                <Link href="/entries">
-                  <Button variant="outline" size="sm">
-                    View All Entries
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+      <div className="grid gap-6 md:grid-cols-2 mb-6">
+        <Suspense fallback={<CardSkeleton />}>
+          <CompanyStats language={language} companyStats={companyStats} />
+        </Suspense>
+
+        <Suspense fallback={<CardSkeleton />}>
+          <MonthlyStats language={language} monthlyStats={monthlyStats} />
+        </Suspense>
+      </div>
+
+      <Suspense fallback={<Card><CardContent><TableSkeleton /></CardContent></Card>}>
+        <RecentEntries language={language} recentEntries={recentEntries} />
+      </Suspense>
+
+
+    </>
   )
 }

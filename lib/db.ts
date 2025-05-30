@@ -32,6 +32,16 @@ export async function isDatabaseInitialized(): Promise<boolean> {
   }
 }
 
+// Helper function to check if database is connected
+export async function isDatabaseConnected(): Promise<boolean> {
+  try {
+    await sql`SELECT 1`
+    return true
+  } catch {
+    return false
+  }
+}
+
 // Helper function to get all companies
 export async function getCompanies() {
   try {
@@ -57,12 +67,10 @@ export async function getEntries(limit = 100, offset = 0) {
         e.id, 
         e.entry_date, 
         c.name as company, 
-        e.value1, 
-        e.value2, 
-        e.value3, 
-        e.value4, 
-        e.balance1, 
-        e.balance2, 
+        e.E2in, 
+        e.E1in, 
+        e.E2out, 
+        e.E1out, 
         e.photo_url,
         e.is_starting_balance
       FROM entries e
@@ -89,12 +97,10 @@ export async function getEntryById(id: number) {
         e.entry_date, 
         c.name as company, 
         c.id as company_id,
-        e.value1, 
-        e.value2, 
-        e.value3, 
-        e.value4, 
-        e.balance1, 
-        e.balance2, 
+        e.E2in, 
+        e.E1in, 
+        e.E2out, 
+        e.E1out, 
         e.photo_url,
         e.is_starting_balance
       FROM entries e
@@ -109,7 +115,7 @@ export async function getEntryById(id: number) {
 }
 
 // Helper function to get statistics by company
-export async function getStatsByCompany() {
+export async function getStatsByCompany(includeStartingBalance: boolean) {
   try {
     if (!(await tableExists("entries"))) {
       return []
@@ -117,16 +123,14 @@ export async function getStatsByCompany() {
     const stats = await sql`
       SELECT 
         c.name as company,
-        SUM(e.value1) as total_value1,
-        SUM(e.value2) as total_value2,
-        SUM(e.value3) as total_value3,
-        SUM(e.value4) as total_value4,
-        SUM(e.balance1) as total_balance1,
-        SUM(e.balance2) as total_balance2,
+        SUM(e.E2in) as total_E2in,
+        SUM(e.E1in) as total_E1in,
+        SUM(e.E2out) as total_E2out,
+        SUM(e.E1out) as total_E1out,
         COUNT(*) as entry_count
       FROM entries e
       JOIN companies c ON e.company_id = c.id
-      WHERE e.is_starting_balance = false
+      ${includeStartingBalance ? sql`` : sql`WHERE e.is_starting_balance = false`}
       GROUP BY c.name
       ORDER BY c.name
     `
@@ -138,7 +142,7 @@ export async function getStatsByCompany() {
 }
 
 // Helper function to get statistics by month
-export async function getStatsByMonth() {
+export async function getStatsByMonth(includeStartingBalance: boolean) {
   try {
     if (!(await tableExists("entries"))) {
       return []
@@ -146,15 +150,13 @@ export async function getStatsByMonth() {
     const stats = await sql`
       SELECT 
         TO_CHAR(e.entry_date, 'YYYY-MM') as month,
-        SUM(e.value1) as total_value1,
-        SUM(e.value2) as total_value2,
-        SUM(e.value3) as total_value3,
-        SUM(e.value4) as total_value4,
-        SUM(e.balance1) as total_balance1,
-        SUM(e.balance2) as total_balance2,
+        SUM(e.E2in) as total_E2in,
+        SUM(e.E1in) as total_E1in,
+        SUM(e.E2out) as total_E2out,
+        SUM(e.E1out) as total_E1out,
         COUNT(*) as entry_count
       FROM entries e
-      WHERE e.is_starting_balance = false
+      ${includeStartingBalance ? sql`` : sql`WHERE e.is_starting_balance = false`}
       GROUP BY TO_CHAR(e.entry_date, 'YYYY-MM')
       ORDER BY month DESC
     `
@@ -166,7 +168,7 @@ export async function getStatsByMonth() {
 }
 
 // Helper function to get statistics by quarter
-export async function getStatsByQuarter() {
+export async function getStatsByQuarter(includeStartingBalance: boolean) {
   try {
     if (!(await tableExists("entries"))) {
       return []
@@ -174,15 +176,13 @@ export async function getStatsByQuarter() {
     const stats = await sql`
       SELECT 
         TO_CHAR(e.entry_date, 'YYYY') || '-Q' || TO_CHAR(e.entry_date, 'Q') as quarter,
-        SUM(e.value1) as total_value1,
-        SUM(e.value2) as total_value2,
-        SUM(e.value3) as total_value3,
-        SUM(e.value4) as total_value4,
-        SUM(e.balance1) as total_balance1,
-        SUM(e.balance2) as total_balance2,
+        SUM(e.E2in) as total_E2in,
+        SUM(e.E1in) as total_E1in,
+        SUM(e.E2out) as total_E2out,
+        SUM(e.E1out) as total_E1out,
         COUNT(*) as entry_count
       FROM entries e
-      WHERE e.is_starting_balance = false
+      ${includeStartingBalance ? sql`` : sql`WHERE e.is_starting_balance = false`}
       GROUP BY TO_CHAR(e.entry_date, 'YYYY'), TO_CHAR(e.entry_date, 'Q')
       ORDER BY quarter DESC
     `
@@ -203,13 +203,11 @@ export async function getStartingBalances() {
       SELECT 
         e.id, 
         e.entry_date, 
-        c.name as company, 
-        e.value1, 
-        e.value2, 
-        e.value3, 
-        e.value4, 
-        e.balance1, 
-        e.balance2
+        c.name as company_name, 
+        e.E2in, 
+        e.E1in, 
+        e.E2out, 
+        e.E1out
       FROM entries e
       JOIN companies c ON e.company_id = c.id
       WHERE e.is_starting_balance = true
@@ -219,5 +217,89 @@ export async function getStartingBalances() {
   } catch (error) {
     console.error("Error getting starting balances:", error)
     return []
+  }
+}
+
+// Helper function to delete entries by an array of IDs
+export async function deleteEntries(ids: number[]) {
+  try {
+    if (!(await tableExists("entries"))) {
+      return
+    }
+
+    if (ids.length === 0) return
+
+    await sql`
+      DELETE FROM entries
+      WHERE id = ANY(${ids})
+    `
+  } catch (error) {
+    console.error("Error deleting entries:", error)
+    throw error
+  }
+}
+
+export async function getSetting(key: string): Promise<string | null> {
+  try {
+  const result = await sql`
+    SELECT value FROM settings WHERE key = ${key}
+  `
+  return result.length > 0 ? result[0].value : null
+  } catch (error) {
+    console.error(`Error getting setting for key ${key}:`, error)
+    return null
+  }
+}
+
+export async function setSetting(key: string, value: string) {
+  await sql`
+    INSERT INTO settings (key, value)
+    VALUES (${key}, ${value})
+    ON CONFLICT (key) DO UPDATE SET value = ${value}
+  `
+}
+
+export async function modifySetting(key: string, value: string) {
+  const currentValue = await getSetting(key)
+  if (currentValue === null) {
+    await setSetting(key, value)
+  } else {
+    await sql`
+      UPDATE settings
+      SET value = ${value}
+      WHERE key = ${key}
+    `
+  }
+}
+
+// Helper function to get the earliest entry date
+export async function getEarliestEntryDate(): Promise<string | null> {
+  try {
+    if (!(await tableExists("entries"))) {
+      return null
+    }
+    const [result] = await sql`
+      SELECT MIN(entry_date) AS earliest_date FROM entries
+    `
+    return result?.earliest_date ?? null
+  } catch (error) {
+    console.error("Error getting earliest entry date:", error)
+    return null
+  }
+}
+
+// Helper function to get the latest entry date
+export async function getLatestEntryDate(): Promise<string | null> {
+  try {
+    if (!(await tableExists("entries"))) {
+      return null
+    }
+    const [result] = await sql`
+      SELECT MAX(entry_date) AS latest_date FROM entries
+    `
+    return result?.latest_date ?? null
+  } catch (error) {
+    console.error("Error getting latest entry date:", error)
+    return null
   }
 }

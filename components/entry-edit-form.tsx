@@ -12,16 +12,26 @@ import { addEntry, updateEntry, deleteEntry, handlePhotoUpload } from "@/app/act
 import { AlertCircle, Upload } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { format } from "date-fns"
-import { Company, Entry } from "@/app/types"
+import { Company } from "@/app/types"
 import { Lang, t } from "@/lib/i18n"
 
 interface EntryFormProps {
   companies: Company[]
-  entry?: Entry
-  lang: Lang
+  entry: {
+    id: number
+    entry_date: string
+    company_id: number
+    e2in: number
+    e1in: number
+    e2out: number
+    e1out: number
+    photo_url: string | null
+    is_starting_balance: boolean
+  }
+  lang: Lang;
 }
 
-export default function EntryForm({ companies, entry, lang}: EntryFormProps) {
+export default function EntryEditForm({ companies, entry, lang }: EntryFormProps) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -29,7 +39,6 @@ export default function EntryForm({ companies, entry, lang}: EntryFormProps) {
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [isStartingBalance, setIsStartingBalance] = useState(entry?.is_starting_balance || false)
   const language = lang || "en"
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
@@ -62,7 +71,7 @@ export default function EntryForm({ companies, entry, lang}: EntryFormProps) {
         router.push("/entries")
       }
     } catch (err) {
-      setError("An unexpected error occurred")
+      setError(t(language, "unexpectedErrorDuringImport"))
       console.error(err)
     } finally {
       setLoading(false)
@@ -72,13 +81,13 @@ export default function EntryForm({ companies, entry, lang}: EntryFormProps) {
   const handleDelete = async () => {
     if (!entry) return
 
-    if (confirm("Are you sure you want to delete this entry?")) {
+    if (confirm(t(language, "confirmDeleteEntry"))) {
       setLoading(true)
       try {
         await deleteEntry(entry.id)
         router.push("/entries")
       } catch (err) {
-        setError("Failed to delete entry")
+        setError(t(language, "failedToDeleteEntry"))
         console.error(err)
       } finally {
         setLoading(false)
@@ -105,7 +114,7 @@ export default function EntryForm({ companies, entry, lang}: EntryFormProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="entryDate">Date</Label>
+          <Label htmlFor="entryDate">{t(language, "date")}</Label>
           <Input
             id="entryDate"
             name="entryDate"
@@ -116,10 +125,10 @@ export default function EntryForm({ companies, entry, lang}: EntryFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="companyId">Company</Label>
+          <Label htmlFor="companyId">{t(language, "company")}</Label>
           <Select name="companyId" defaultValue={entry?.company_id?.toString()}>
             <SelectTrigger>
-              <SelectValue placeholder="Select a company" />
+              <SelectValue placeholder={t(language, "selectCompany")} />
             </SelectTrigger>
             <SelectContent>
               {companies.map((company) => (
@@ -132,23 +141,23 @@ export default function EntryForm({ companies, entry, lang}: EntryFormProps) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="E2in">E2 In</Label>
-          <Input id="E2in" name="E2in" type="number" step="1" defaultValue={entry?.E2in || 0} required />
+          <Label htmlFor="E2in">{t(language, "e2Intake")}</Label>
+          <Input id="E2in" name="E2in" type="number" step="1" defaultValue={Math.floor(entry?.e2in) || 0} required />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="E1in">E1 In</Label>
-          <Input id="E1in" name="E1in" type="number" step="1" defaultValue={entry?.E1in || 0} required />
+          <Label htmlFor="E1in">{t(language, "e1Intake")}</Label>
+          <Input id="E1in" name="E1in" type="number" step="1" defaultValue={Math.floor(entry?.e1in) || 0} required />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="E2out">E2 Out</Label>
-          <Input id="E2out" name="E2out" type="number" step="1" defaultValue={entry?.E2out || 0} required />
+          <Label htmlFor="E2out">{t(language, "e2Output")}</Label>
+          <Input id="E2out" name="E2out" type="number" step="1" defaultValue={Math.floor(entry?.e2out) || 0} required />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="E1out">E1 Out</Label>
-          <Input id="E1out" name="E1out" type="number" step="1" defaultValue={entry?.E1out || 0} required />
+          <Label htmlFor="E1out">{t(language, "e1Output")}</Label>
+          <Input id="E1out" name="E1out" type="number" step="1" defaultValue={Math.floor(entry?.e1out) || 0} required />
         </div>
       </div>
 
@@ -159,21 +168,21 @@ export default function EntryForm({ companies, entry, lang}: EntryFormProps) {
             checked={isStartingBalance}
             onCheckedChange={(checked) => setIsStartingBalance(checked as boolean)}
           />
-          <Label htmlFor="isStartingBalance">This is a starting balance entry</Label>
+          <Label htmlFor="isStartingBalance">{t(language, "startingBalanceEntry")}</Label>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="photo">Photo Proof (Optional)</Label>
+        <Label htmlFor="photo">{t(language, "photoProofOptional")}</Label>
         <div className="flex items-center gap-4">
           <Button type="button" variant="outline" onClick={() => document.getElementById("photo")?.click()}>
             <Upload className="mr-2 h-4 w-4" />
-            Upload Photo
+            {t(language, "uploadPhoto")}
           </Button>
           <Input id="photo" type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
           {photoUrl && (
             <div className="relative w-20 h-20 rounded-md overflow-hidden">
-              <img src={photoUrl || "/placeholder.svg"} alt="Photo preview" className="object-cover w-full h-full" />
+              <img src={photoUrl || "/placeholder.svg"} alt={t(language, "photoPreview")} className="object-cover w-full h-full" />
             </div>
           )}
         </div>
@@ -181,16 +190,16 @@ export default function EntryForm({ companies, entry, lang}: EntryFormProps) {
 
       <div className="flex justify-between">
         <Button type="button" variant="outline" onClick={() => router.back()} disabled={loading}>
-          Cancel
+          {t(language, "cancelEntry")}
         </Button>
         <div className="flex gap-2">
           {entry && (
             <Button type="button" variant="destructive" onClick={handleDelete} disabled={loading}>
-              Delete
+              {t(language, "delete")}
             </Button>
           )}
           <Button type="submit" disabled={loading}>
-            {loading ? "Saving..." : entry ? "Update Entry" : "Create Entry"}
+            {loading ? t(language, "saving") : entry ? t(language, "updateEntry") : t(language, "createEntry")}
           </Button>
         </div>
       </div>

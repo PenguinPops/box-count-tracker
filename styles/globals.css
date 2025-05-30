@@ -92,3 +92,31 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  .pdf-table {
+    page-break-inside: auto;
+  }
+  
+  .pdf-table tbody tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  .pdf-table thead {
+    display: table-header-group;
+  }
+}
+
+/* For better PDF rendering */
+.pdf-optimized table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+}
+
+.pdf-optimized td,
+.pdf-optimized th {
+  padding: 6px 8px !important;
+  border: 1px solid #333 !important;
+  vertical-align: top;
+}

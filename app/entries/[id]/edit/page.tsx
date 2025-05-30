@@ -1,50 +1,65 @@
 import { MainNav } from "@/components/nav"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { getCompanies, getEntryById, isDatabaseInitialized } from "@/lib/db"
-import EntryForm from "@/components/entry-form"
+import { getCompanies, getEntryById, isDatabaseInitialized, getSetting } from "@/lib/db"
+import EntryEditForm from "@/components/entry-edit-form"
 import { notFound } from "next/navigation"
 import { DatabaseInitializer } from "@/components/db-initializer"
+import { Company } from "@/app/types"
+import { Lang, t } from "@/lib/i18n"
 
-export default async function EditEntryPage({ params }: { params: { id: string } }) {
-  const dbInitialized = await isDatabaseInitialized()
+interface PageProps {
+  params: { id: string }
+}
 
-  if (!dbInitialized) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <MainNav />
-        <main className="flex-1 p-8 flex items-center justify-center">
-          <DatabaseInitializer />
-        </main>
-      </div>
-    )
-  }
+interface Entry {
+  id: number
+  entry_date: string
+  company_id: number
+  e2in: number
+  e1in: number
+  e2out: number
+  e1out: number
+  photo_url: string | null
+  is_starting_balance: boolean
+}
 
+export default async function EditEntryPage({ params }: PageProps) {
   const id = Number.parseInt(params.id)
-  const [entry, companies] = await Promise.all([getEntryById(id), getCompanies()])
+  const [entryData, rawCompanies, languageSetting]: [Record<string, any> | null, Record<string, any>[], string | null] = await Promise.all([
+    getEntryById(id),
+    getCompanies(),
+    getSetting("language")
+  ])
+  const language: Lang = languageSetting === "pl" ? "pl" : "en"
 
-  if (!entry) {
+  const companies: Company[] = rawCompanies.map((company) => ({
+    id: company.id,
+    name: company.name,
+  }))
+
+  if (!entryData) {
     notFound()
   }
 
-  return (
-    <div className="flex min-h-screen flex-col">
-      <MainNav />
-      <main className="flex-1 p-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Edit Entry #{id}</h1>
-          <p className="text-muted-foreground">Update the financial data for this entry</p>
-        </div>
+  const entry: Entry = entryData as Entry
+  console.log("Editing entry:", entry)
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Entry Details</CardTitle>
-            <CardDescription>Edit the financial data for this entry</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <EntryForm companies={companies} entry={entry} />
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+  return (
+    <>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">{`${t(language, "editEntryNum")}${id}`}</h1>
+        <p className="text-muted-foreground">{t(language, "updateEntryData")}</p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{t(language, "entryDetails")}</CardTitle>
+          <CardDescription>{t(language, "enterFinancialData")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <EntryEditForm companies={companies} entry={entry} lang={language} />
+        </CardContent>
+      </Card>
+    </>
   )
 }

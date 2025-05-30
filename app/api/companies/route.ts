@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sql } from "@/lib/db"
 import { revalidatePath } from "next/cache"
+import { getCompanies } from "@/lib/db"
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,5 +19,15 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error adding company:", error)
     return NextResponse.json({ error: "Failed to add company" }, { status: 500 })
+  }
+}
+
+export async function GET() {
+  try {
+    const companies = await getCompanies()
+    return NextResponse.json({ success: companies })
+  } catch (error) {
+    console.error("Error fetching companies:", error)
+    return NextResponse.json({ error: "Failed to fetch companies" }, { status: 500 })
   }
 }

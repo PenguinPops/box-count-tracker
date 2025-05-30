@@ -10,26 +10,15 @@ import { AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { parseCSV } from "@/lib/utils"
 import { importCSVEntries } from "@/app/actions"
-
-interface Company {
-  id: number
-  name: string
-}
+import { Company, Entry } from "@/app/types"
+import { t, Lang } from "@/lib/i18n"
 
 interface ProcessedEntry {
-  date: string
-  companyId: number | null
-  companyName: string
-  value1: number
-  value2: number
-  value3: number
-  value4: number
-  isStartingBalance: boolean
+  entry: Omit<Entry, 'id' | 'photo_url'> & { companyName: string }
   include: boolean
-  originalIndex: number
 }
 
-export default function CSVImport({ companies = [] }: { companies?: Company[] }) {
+export default function CSVImport({ companies = [], lang }: { companies?: Company[], lang?: Lang }) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -47,6 +36,22 @@ export default function CSVImport({ companies = [] }: { companies?: Company[] })
     }
   }
 
+  const language = lang || 'en';
+
+  const updateRow = (index: number, field: keyof ProcessedEntry['entry'], value: any) => {
+    setProcessedData(prev => {
+      const newData = [...prev]
+      newData[index] = {
+        ...newData[index],
+        entry: {
+          ...newData[index].entry,
+          [field]: value
+        }
+      }
+      return newData
+    })
+  }
+
   const handlePreview = async () => {
     if (!file) return
 
@@ -54,27 +59,28 @@ export default function CSVImport({ companies = [] }: { companies?: Company[] })
     try {
       const text = await file.text()
       const data = parseCSV(text)
-      
-      const mappedData = data.map((row: any, index: number) => {
+
+      const mappedData = data.map((row: any) => {
         const company = companies.find(c => c.name.toLowerCase() === row.firma?.toLowerCase())
-        
+
         return {
-          date: row.data,
-          companyId: company?.id || null,
-          companyName: row.firma || 'Unknown',
-          value1: parseInt(row['pojemniki przyjęte E2']) || 0,
-          value2: parseInt(row['pojemniki przyjęte E1']) || 0,
-          value3: parseInt(row['pojemniki oddane E2']) || 0,
-          value4: parseInt(row['pojemniki oddane E1']) || 0,
-          isStartingBalance: false,
-          include: !!company,
-          originalIndex: index
+          entry: {
+            entry_date: row.data,
+            company_id: company?.id || 0,
+            companyName: row.firma || 'Unknown',
+            E2in: parseInt(row['E2 box intake']) || 0,
+            E1in: parseInt(row['E1 box intake']) || 0,
+            E2out: parseInt(row['E2 box return']) || 0,
+            E1out: parseInt(row['E1 box return']) || 0,
+            is_starting_balance: false,
+          },
+          include: !!company
         }
       })
 
       setProcessedData(mappedData)
     } catch (err) {
-      setError("Failed to parse CSV file. Please check the format.")
+      setError(t(language, "failedToParseCsv"))
       console.error(err)
     } finally {
       setLoading(false)
@@ -89,12 +95,21 @@ export default function CSVImport({ companies = [] }: { companies?: Company[] })
     setSuccess(null)
 
     try {
+      // Prepare data for import
       const entriesToImport = processedData
-        .filter(row => row.include && row.companyId !== null)
-        .map(({ originalIndex, include, ...rest }) => rest)
+        .filter(row => row.include && row.entry.company_id !== 0)
+        .map(({ entry }) => ({
+          entry_date: entry.entry_date,
+          company_id: entry.company_id,
+          E2in: entry.E2in,
+          E1in: entry.E1in,
+          E2out: entry.E2out,
+          E1out: entry.E1out,
+          is_starting_balance: entry.is_starting_balance
+        }))
 
       if (entriesToImport.length === 0) {
-        setError("No valid entries to import")
+        setError(t(language, "noValidEntriesToImport"))
         return
       }
 
@@ -103,24 +118,17 @@ export default function CSVImport({ companies = [] }: { companies?: Company[] })
       if (result.error) {
         setError(result.error)
       } else {
-        setSuccess(`Successfully imported ${result.count} entries`)
+        setSuccess(t(language, "successfullyImported").replace("{count}", result.count.toString()))
         setProcessedData([])
         setFile(null)
+        router.refresh()
       }
     } catch (err) {
-      setError("An unexpected error occurred during import")
-      console.error(err)
+      console.error("Import error:", err)
+      setError(t(language, "unexpectedErrorDuringImport"))
     } finally {
       setLoading(false)
     }
-  }
-
-  const updateRow = (index: number, field: string, value: any) => {
-    setProcessedData(prev => {
-      const newData = [...prev]
-      newData[index] = { ...newData[index], [field]: value }
-      return newData
-    })
   }
 
   const toggleAll = (include: boolean) => {
@@ -129,8 +137,8 @@ export default function CSVImport({ companies = [] }: { companies?: Company[] })
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Import Entries from CSV</h1>
-      
+      <h1 className="text-2xl font-bold">{t(language, "importEntriesFromCSV")}</h1>
+
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -146,24 +154,31 @@ export default function CSVImport({ companies = [] }: { companies?: Company[] })
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="csvFile">CSV File</Label>
+        <Label htmlFor="csvFile">{t(language, "csvFile")}</Label>
         <div className="flex items-center gap-4">
-          <Input 
-            id="csvFile" 
-            type="file" 
-            accept=".csv" 
-            onChange={handleFileChange} 
+          <Input
+            id="csvFile"
+            type="file"
+            accept=".csv"
+            onChange={handleFileChange}
             disabled={loading}
           />
           {file && (
-            <Button 
-              type="button" 
-              onClick={handlePreview}
-              disabled={loading}
-            >
-              {loading ? "Processing..." : "Preview"}
+            <Button type="button" onClick={handlePreview} disabled={loading}>
+              {loading ? t(language, "processing") : t(language, "preview")}
             </Button>
           )}
+
+          <div className="flex justify-end gap-2">
+
+            <Button type="button" variant="outline" onClick={() => { setProcessedData([]); setFile(null) }} disabled={loading}>
+              {t(language, "cancel")}
+            </Button>
+
+            <Button type="button" onClick={handleImport} disabled={loading || processedData.filter(row => row.include && row.entry.company_id).length === 0}>
+              {loading ? t(language, "importing") : t(language, "importEntries").replace("{count}", processedData.filter(row => row.include && row.entry.company_id).length.toString())}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -176,101 +191,112 @@ export default function CSVImport({ companies = [] }: { companies?: Company[] })
                 checked={processedData.every(row => row.include)}
                 onCheckedChange={(checked) => toggleAll(checked as boolean)}
               />
-              <Label htmlFor="select-all">Select/Deselect All</Label>
+
+              <Label htmlFor="select-all">{t(language, "selectDeselectAll")}</Label>
             </div>
             <div className="text-sm text-gray-500">
-              {processedData.filter(row => row.include).length} of {processedData.length} rows selected
+              {t(language, "rowsSelected").replace("{selected}", processedData.filter(row => row.include).length.toString()).replace("{total}", processedData.length.toString())}
             </div>
+
           </div>
 
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-300">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Include</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value 1</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value 2</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value 3</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value 4</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Starting Balance</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t(language, "include")}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t(language, "date")}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t(language, "company")}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t(language, "e2Intake")}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t(language, "e1Intake")}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t(language, "e2Return")}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t(language, "e1Return")}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t(language, "startingBalance")}</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t(language, "status")}</th>
                 </tr>
               </thead>
               <tbody className="bg-blue-950 divide-y divide-gray-500">
                 {processedData.map((row, index) => (
-                  <tr key={row.originalIndex} className={!row.companyId ? 'bg-yellow-50' : ''}>
+                  <tr key={index} className={!row.entry.company_id ? 'bg-yellow-50' : ''}>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <Checkbox
                         checked={row.include}
-                        onCheckedChange={(checked) => updateRow(index, 'include', checked)}
-                        disabled={!row.companyId}
+                        onCheckedChange={(checked) => {
+                          setProcessedData(prev => {
+                            const newData = [...prev]
+                            newData[index] = {
+                              ...newData[index],
+                              include: checked as boolean
+                            }
+                            return newData
+                          })
+                        }}
+                        disabled={!row.entry.company_id}
                       />
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <Input
                         type="text"
-                        value={row.date}
-                        onChange={(e) => updateRow(index, 'date', e.target.value)}
+                        value={row.entry.entry_date}
+                        onChange={(e) => updateRow(index, 'entry_date', e.target.value)}
                         className="w-28"
                       />
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
-                        <span>{row.companyName}</span>
-                        {!row.companyId && (
-                          <span className="text-xs text-yellow-600">(Unknown company)</span>
+                        <span>{row.entry.companyName}</span>
+                        {!row.entry.company_id && (
+                          <span className="text-xs text-yellow-600">({t(language, "unknownCompany")})</span>
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <Input
                         type="number"
-                        value={row.value1}
-                        onChange={(e) => updateRow(index, 'value1', parseInt(e.target.value) || 0)}
+                        value={row.entry.E2in}
+                        onChange={(e) => updateRow(index, 'E2in', parseInt(e.target.value) || 0)}
                         className="w-20"
                       />
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <Input
                         type="number"
-                        value={row.value2}
-                        onChange={(e) => updateRow(index, 'value2', parseInt(e.target.value) || 0)}
+                        value={row.entry.E1in}
+                        onChange={(e) => updateRow(index, 'E1in', parseInt(e.target.value) || 0)}
                         className="w-20"
                       />
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <Input
                         type="number"
-                        value={row.value3}
-                        onChange={(e) => updateRow(index, 'value3', parseInt(e.target.value) || 0)}
+                        value={row.entry.E2out}
+                        onChange={(e) => updateRow(index, 'E2out', parseInt(e.target.value) || 0)}
                         className="w-20"
                       />
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <Input
                         type="number"
-                        value={row.value4}
-                        onChange={(e) => updateRow(index, 'value4', parseInt(e.target.value) || 0)}
+                        value={row.entry.E1out}
+                        onChange={(e) => updateRow(index, 'E1out', parseInt(e.target.value) || 0)}
                         className="w-20"
                       />
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
                       <Checkbox
-                        checked={row.isStartingBalance}
-                        onCheckedChange={(checked) => updateRow(index, 'isStartingBalance', checked)}
+                        checked={row.entry.is_starting_balance}
+                        onCheckedChange={(checked) => updateRow(index, 'is_starting_balance', checked)}
                       />
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      {row.companyId ? (
+                      {row.entry.company_id ? (
                         row.include ? (
-                          <span className="text-green-600">Will be imported</span>
+                          <span className="text-green-600">{t(language, "willBeImported")}</span>
                         ) : (
-                          <span className="text-gray-400">Skipped</span>
+                          <span className="text-gray-400">{t(language, "skipped")}</span>
                         )
                       ) : (
-                        <span className="text-yellow-600">Invalid company</span>
+                        <span className="text-yellow-600">{t(language, "invalidCompany")}</span>
                       )}
                     </td>
                   </tr>
@@ -278,38 +304,17 @@ export default function CSVImport({ companies = [] }: { companies?: Company[] })
               </tbody>
             </table>
           </div>
-
-          <div className="flex justify-end gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => {
-                setProcessedData([])
-                setFile(null)
-              }}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="button" 
-              onClick={handleImport}
-              disabled={loading || processedData.filter(row => row.include && row.companyId).length === 0}
-            >
-              {loading ? "Importing..." : `Import ${processedData.filter(row => row.include && row.companyId).length} Entries`}
-            </Button>
-          </div>
         </div>
       )}
 
       <div className="pt-4 border-t">
-        <h2 className="text-lg font-medium mb-2">CSV Format Requirements</h2>
+        <h2 className="text-lg font-medium mb-2">{t(language, "csvFormatRequirements")}</h2>
         <ul className="list-disc pl-5 space-y-1 text-sm text-gray-600">
-          <li>CSV should have headers matching your sample data</li>
-          <li>Date format should be DD/MM/YYYY (editable in preview)</li>
-          <li>Company names must match exactly with your database</li>
-          <li>All value columns should contain numbers</li>
-          <li>You can edit values and select which rows to import</li>
+          <li>{t(language, "csvRequirement1")}</li>
+          <li>{t(language, "csvRequirement2")}</li>
+          <li>{t(language, "csvRequirement3")}</li>
+          <li>{t(language, "csvRequirement4")}</li>
+          <li>{t(language, "csvRequirement5")}</li>
         </ul>
       </div>
     </div>

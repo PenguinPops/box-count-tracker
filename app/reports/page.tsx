@@ -1,0 +1,27 @@
+// app/reports/page.tsx
+
+import { getCompanies, getEarliestEntryDate, getLatestEntryDate } from "@/lib/db"
+import ReportPageClient from "@/components/report-page-client"
+import { getSetting } from "@/lib/db"
+
+export default async function ReportPage() {
+    const companies = await getCompanies()
+    const earliestDate = await getEarliestEntryDate()
+    const latestDate = await getLatestEntryDate()
+
+    const firstDayOfLastMonth = new Date(new Date().setMonth(new Date().getMonth() - 1, 1))
+
+    const lastDayOfLastMonth = new Date(new Date().setMonth(new Date().getMonth(), 0))
+
+    const languageSetting = await getSetting("language")
+    const language = languageSetting === "pl" ? "pl" : "en"
+
+    return (
+        <ReportPageClient
+            companies={companies.map(company => ({ name: company.name || "Unknown" }))}
+            earliestDate={firstDayOfLastMonth}
+            latestDate={lastDayOfLastMonth}
+            language={language}
+        />
+    )
+}
