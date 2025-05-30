@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { sql } from "@/lib/db"
 import { Entry } from "@/app/types"
 import { isDatabaseConnected } from "@/lib/db";
+import { report } from "process";
 
 // Initialize database tables
 export async function initializeDatabase() {
@@ -166,13 +167,13 @@ export async function handlePhotoUpload(formData: FormData) {
 export async function importCSVEntries(entries: Omit<Entry, 'id' | 'photo_url'>[]) {
   try {
     let count = 0
-    
+
     for (const entry of entries) {
       try {
         // Convert date from DD/MM/YYYY to YYYY-MM-DD format
         const [day, month, year] = entry.entry_date.split('/')
         const isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
-        
+
         await sql`
           INSERT INTO entries (
             entry_date, company_id, E2in, E1in, E2out, E1out, is_starting_balance
@@ -248,20 +249,20 @@ interface GenerateReportParams {
 }
 
 export async function generateReportDataAction(params: GenerateReportParams): Promise<ReportData> {
-  const { 
-    startDate, 
-    endDate, 
-    selectedCompanyIds, 
+  const {
+    startDate,
+    endDate,
+    selectedCompanyIds,
     selectedCompanyNames,
-    boxTypes, 
-    includeSummary 
+    boxTypes,
+    includeSummary
   } = params;
 
   // --- 1. Fetch Entries ---
   // IMPORTANT: For optimal performance, filtering (dates, company IDs) should ideally happen 
   // in the SQL query. The current `getEntries` in your `lib/db.ts` doesn't support this.
   // The query below demonstrates direct SQL usage for better filtering.
-  
+
   let queryConditions = [sql`e.entry_date >= ${startDate}`, sql`e.entry_date <= ${endDate}`];
   if (selectedCompanyIds && selectedCompanyIds.length > 0) {
     // Note: Handling arrays with `ANY` in `sql` tagged templates can be tricky.
@@ -278,7 +279,7 @@ export async function generateReportDataAction(params: GenerateReportParams): Pr
 
   // Constructing WHERE clause by joining conditions
   const whereClause = sql`WHERE ${queryConditions.map((condition, index) => index === 0 ? condition : sql`AND ${condition}`).join(' ')}`;
-  
+
   let fetchedDbEntries = await sql`
     SELECT 
       e.id, 
@@ -302,7 +303,7 @@ export async function generateReportDataAction(params: GenerateReportParams): Pr
     const companyIdSet = new Set(selectedCompanyIds);
     fetchedDbEntries = fetchedDbEntries.filter(entry => companyIdSet.has(entry.company_id));
   }
-  
+
   const reportEntries = fetchedDbEntries.map(entry => ({
     id: entry.id,
     entry_date: entry.entry_date instanceof Date ? entry.entry_date.toISOString().split('T')[0] : String(entry.entry_date),
@@ -330,25 +331,30 @@ export async function generateReportDataAction(params: GenerateReportParams): Pr
 
     reportEntries.forEach(entry => {
       if (boxTypes.includes('E1')) {
-        reportSummary.totalE1in += entry.E1in;
-        reportSummary.totalE1out += entry.E1out;
+        if (reportSummary) {
+          reportSummary.totalE1in += entry.E1in;
+          reportSummary.totalE1out += entry.E1out;
+        }
       }
       if (boxTypes.includes('E2')) {
-        reportSummary.totalE2in += entry.E2in;
-        reportSummary.totalE2out += entry.E2out;
+        if (reportSummary) {
+          reportSummary.totalE2in += entry.E2in;
+          reportSummary.totalE2out += entry.E2out;
+        }
       }
-
-      if (!reportSummary.byCompany[entry.company]) {
-        reportSummary.byCompany[entry.company] = { E1in: 0, E1out: 0, E2in: 0, E2out: 0 };
-      }
-      const companySummary = reportSummary.byCompany[entry.company];
-      if (boxTypes.includes('E1')) {
-        companySummary.E1in += entry.E1in;
-        companySummary.E1out += entry.E1out;
-      }
-      if (boxTypes.includes('E2')) {
-        companySummary.E2in += entry.E2in;
-        companySummary.E2out += entry.E2out;
+      if (reportSummary) {
+        if (!reportSummary.byCompany[entry.company]) {
+          reportSummary.byCompany[entry.company] = { E1in: 0, E1out: 0, E2in: 0, E2out: 0 };
+        }
+        const companySummary = reportSummary.byCompany[entry.company];
+        if (boxTypes.includes('E1')) {
+          companySummary.E1in += entry.E1in;
+          companySummary.E1out += entry.E1out;
+        }
+        if (boxTypes.includes('E2')) {
+          companySummary.E2in += entry.E2in;
+          companySummary.E2out += entry.E2out;
+        }
       }
     });
   }

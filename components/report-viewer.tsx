@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Button } from './ui/button'
 import { useReactToPrint } from 'react-to-print'
 import { Download, Printer } from 'lucide-react'
@@ -25,7 +25,7 @@ export function ReportViewer({
     language: Lang,
     onClose: () => void
 }) {
-    const reportRef = useState<HTMLDivElement | null>(null)
+    const reportRef = useRef<HTMLDivElement | null>(null)
     const [isClient, setIsClient] = useState(false)
 
     useEffect(() => {
@@ -64,11 +64,11 @@ export function ReportViewer({
         if (!reportRef.current) return
 
         const canvas = await html2canvas(reportRef.current, {
-            scale: 2,
+            // scale: 2,
             useCORS: true,
             logging: true,
-            windowWidth: reportRef.current.scrollWidth,
-            windowHeight: reportRef.current.scrollHeight
+            // windowWidth: reportRef.current.scrollWidth,
+            // windowHeight: reportRef.current.scrollHeight
         })
 
         const imgData = canvas.toDataURL('image/png')
@@ -118,7 +118,7 @@ export function ReportViewer({
                 </div>
                 <div className="overflow-auto p-4">
                     <div
-                        ref={(el) => (reportRef.current = el)}
+                        ref={(el) => { reportRef.current = el; }}
                         className="bg-white p-6 mx-auto shadow-none print:shadow-none report-content"
                         style={{
                             width: '210mm',
