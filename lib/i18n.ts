@@ -102,6 +102,10 @@ export const translations = {
         generateReport: "Generate Report",
         generating: "Generating...",
         failedToGenerateReport: "Failed to generate report. Please try again.",
+        newestFirst: "Newest First",
+        oldestFirst: "Oldest First",
+        entriesOrder: "Entries Order",
+        selectOrder: "Select entries order",
         // import
         importCSVEntries: "Import Entries from CSV",
         noCompaniesFound: "No companies found in database.",
@@ -318,6 +322,10 @@ export const translations = {
         generateReport: "Wygeneruj Raport",
         generating: "Generowanie...",
         failedToGenerateReport: "Nie udało się wygenerować raportu. Spróbuj ponownie.",
+        newestFirst: "Sortuj od najnowszych",
+        oldestFirst: "Sortuj od najstarszych",
+        entriesOrder: "Kolejność wpisów",
+        selectOrder: "Wybierz kolejność wpisów",
         // import
         importCSVEntries: "Importuj wpisy z pliku CSV",
         noCompaniesFound: "Nie znaleziono żadnych firm w bazie danych",
@@ -427,13 +435,13 @@ export const translations = {
         orContinueWith: "Lub kontynuuj z",
         continueWithGoogle: "Kontynuuj z Google",
         signOut: "Wyloguj się",
-      
+
         // Error messages
         invalidCredentials: "Nieprawidłowy e-mail lub hasło",
         invalidEmail: "Wprowadź prawidłowy adres e-mail",
         passwordRequired: "Hasło jest wymagane",
         unexpectedError: "Wystąpił nieoczekiwany błąd",
-      
+
         // Not logged in page
         notLoggedInTitle: "Dostęp ograniczony",
         notLoggedInDescription: "Musisz być zalogowany, aby uzyskać dostęp do tej strony. Zaloguj się, aby kontynuować.",

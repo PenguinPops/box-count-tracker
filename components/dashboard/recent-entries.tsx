@@ -36,14 +36,14 @@ export const RecentEntries = ({
                             <table className="w-full">
                                 <thead>
                                     <tr className="border-b">
-                                        <th className="text-left py-3 px-4">Date</th>
-                                        <th className="text-left py-3 px-4">Company</th>
-                                        <th className="text-right py-3 px-4">E2 intake</th>
-                                        <th className="text-right py-3 px-4">E1 intake</th>
-                                        <th className="text-right py-3 px-4">E2 output</th>
-                                        <th className="text-right py-3 px-4">E1 output</th>
-                                        <th className="text-right py-3 px-4">E2 balance</th>
-                                        <th className="text-right py-3 px-4">E1 balance</th>
+                                        <th className="text-left py-3 px-4">{t(language, "date")}</th>
+                                        <th className="text-left py-3 px-4">{t(language, "company")}</th>
+                                        <th className="text-right py-3 px-4">{t(language, "e2Intake")}</th>
+                                        <th className="text-right py-3 px-4">{t(language, "e1Intake")}</th>
+                                        <th className="text-right py-3 px-4">{t(language, "e2Output")}</th>
+                                        <th className="text-right py-3 px-4">{t(language, "e1Output")}</th>
+                                        <th className="text-right py-3 px-4">{t(language, "e2Balance")}</th>
+                                        <th className="text-right py-3 px-4">{t(language, "e1Balance")}</th>
                                     </tr>
                                 </thead>
                                 <tbody>

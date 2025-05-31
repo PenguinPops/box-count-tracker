@@ -12,6 +12,7 @@ export function ReportViewer({
     reportData,
     includeParameters,
     includeEntries,
+    entriesDir,
     includeSummary,
     displayMode,
     language,
@@ -21,12 +22,14 @@ export function ReportViewer({
     includeParameters: boolean,
     includeEntries: boolean,
     includeSummary: boolean,
+    entriesDir: 'asc' | 'desc',
     displayMode: 'raw' | 'balance',
     language: Lang,
     onClose: () => void
 }) {
     const reportRef = useRef<HTMLDivElement | null>(null)
     const [isClient, setIsClient] = useState(false)
+    const [reverseOrder, setReverseOrder] = useState(false) // Add this line
 
     useEffect(() => {
         setIsClient(true)
@@ -133,6 +136,7 @@ export function ReportViewer({
                             includeSummary={includeSummary}
                             displayMode={displayMode}
                             language={language}
+                            entriesDir={entriesDir}
                         />
                     </div>
                 </div>
@@ -147,16 +151,25 @@ function ReportContent({
     includeEntries,
     includeSummary,
     displayMode,
-    language
+    language,
+    entriesDir
 }: {
     reportData: any,
     includeParameters: boolean,
     includeEntries: boolean,
     includeSummary: boolean,
     displayMode: 'raw' | 'balance',
-    language: Lang
+    language: Lang,
+    entriesDir: 'asc' | 'desc'
 }) {
-    const { parameters, entries, summary } = reportData
+    const { parameters, entries: originalEntries, summary } = reportData
+
+    const entries = [...originalEntries].sort((a, b) => {
+        const dateA = new Date(a.entry_date).getTime();
+        const dateB = new Date(b.entry_date).getTime();
+        return entriesDir === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+
 
     const formatDate = (dateString: string | Date) => {
         const date = new Date(dateString);
@@ -170,16 +183,16 @@ function ReportContent({
         if (displayMode === 'raw') {
             return (
                 <>
-                    {parameters.boxTypes.includes('E1') && (
-                        <>
-                            <td className="border p-2 text-right">{entry.E1in || 0}</td>
-                            <td className="border p-2 text-right">{entry.E1out || 0}</td>
-                        </>
-                    )}
                     {parameters.boxTypes.includes('E2') && (
                         <>
                             <td className="border p-2 text-right">{entry.E2in || 0}</td>
                             <td className="border p-2 text-right">{entry.E2out || 0}</td>
+                        </>
+                    )}
+                    {parameters.boxTypes.includes('E1') && (
+                        <>
+                            <td className="border p-2 text-right">{entry.E1in || 0}</td>
+                            <td className="border p-2 text-right">{entry.E1out || 0}</td>
                         </>
                     )}
                 </>
@@ -187,14 +200,14 @@ function ReportContent({
         } else {
             return (
                 <>
-                    {parameters.boxTypes.includes('E1') && (
-                        <td className="border p-2 text-right">
-                            {(entry.E1out || 0) - (entry.E1in || 0)}
-                        </td>
-                    )}
                     {parameters.boxTypes.includes('E2') && (
                         <td className="border p-2 text-right">
                             {(entry.E2out || 0) - (entry.E2in || 0)}
+                        </td>
+                    )}
+                    {parameters.boxTypes.includes('E1') && (
+                        <td className="border p-2 text-right">
+                            {(entry.E1out || 0) - (entry.E1in || 0)}
                         </td>
                     )}
                 </>
@@ -206,18 +219,6 @@ function ReportContent({
         if (displayMode === 'raw') {
             return (
                 <>
-                    {parameters.boxTypes.includes('E1') && (
-                        <>
-                            <div className="bg-blue-50 p-3 rounded">
-                                <div className="text-sm text-blue-600">{t(language, 'e1Intake')}</div>
-                                <div className="text-xl font-bold">{summary.totalE1in}</div>
-                            </div>
-                            <div className="bg-blue-50 p-3 rounded">
-                                <div className="text-sm text-blue-600">{t(language, 'e1Output')}</div>
-                                <div className="text-xl font-bold">{summary.totalE1out}</div>
-                            </div>
-                        </>
-                    )}
                     {parameters.boxTypes.includes('E2') && (
                         <>
                             <div className="bg-green-50 p-3 rounded">
@@ -230,24 +231,36 @@ function ReportContent({
                             </div>
                         </>
                     )}
+                    {parameters.boxTypes.includes('E1') && (
+                        <>
+                            <div className="bg-blue-50 p-3 rounded">
+                                <div className="text-sm text-blue-600">{t(language, 'e1Intake')}</div>
+                                <div className="text-xl font-bold">{summary.totalE1in}</div>
+                            </div>
+                            <div className="bg-blue-50 p-3 rounded">
+                                <div className="text-sm text-blue-600">{t(language, 'e1Output')}</div>
+                                <div className="text-xl font-bold">{summary.totalE1out}</div>
+                            </div>
+                        </>
+                    )}
                 </>
             )
         } else {
             return (
                 <>
-                    {parameters.boxTypes.includes('E1') && (
-                        <div className="bg-blue-50 p-3 rounded">
-                            <div className="text-sm text-blue-600">{t(language, 'e1Balance')}</div>
-                            <div className="text-xl font-bold">
-                                {summary.totalE1out - summary.totalE1in}
-                            </div>
-                        </div>
-                    )}
                     {parameters.boxTypes.includes('E2') && (
                         <div className="bg-green-50 p-3 rounded">
                             <div className="text-sm text-green-600">{t(language, 'e2Balance')}</div>
                             <div className="text-xl font-bold">
                                 {summary.totalE2out - summary.totalE2in}
+                            </div>
+                        </div>
+                    )}
+                    {parameters.boxTypes.includes('E1') && (
+                        <div className="bg-blue-50 p-3 rounded">
+                            <div className="text-sm text-blue-600">{t(language, 'e1Balance')}</div>
+                            <div className="text-xl font-bold">
+                                {summary.totalE1out - summary.totalE1in}
                             </div>
                         </div>
                     )}
@@ -260,16 +273,16 @@ function ReportContent({
         if (displayMode === 'raw') {
             return (
                 <>
-                    {parameters.boxTypes.includes('E1') && (
-                        <>
-                            <td className="border p-2 text-right">{totals.E1in}</td>
-                            <td className="border p-2 text-right">{totals.E1out}</td>
-                        </>
-                    )}
                     {parameters.boxTypes.includes('E2') && (
                         <>
                             <td className="border p-2 text-right">{totals.E2in}</td>
                             <td className="border p-2 text-right">{totals.E2out}</td>
+                        </>
+                    )}
+                    {parameters.boxTypes.includes('E1') && (
+                        <>
+                            <td className="border p-2 text-right">{totals.E1in}</td>
+                            <td className="border p-2 text-right">{totals.E1out}</td>
                         </>
                     )}
                 </>
@@ -277,14 +290,14 @@ function ReportContent({
         } else {
             return (
                 <>
-                    {parameters.boxTypes.includes('E1') && (
-                        <td className="border p-2 text-right">
-                            {totals.E1out - totals.E1in}
-                        </td>
-                    )}
                     {parameters.boxTypes.includes('E2') && (
                         <td className="border p-2 text-right">
                             {totals.E2out - totals.E2in}
+                        </td>
+                    )}
+                    {parameters.boxTypes.includes('E1') && (
+                        <td className="border p-2 text-right">
+                            {totals.E1out - totals.E1in}
                         </td>
                     )}
                 </>

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { formatInputDate} from "@/lib/utils"
+import { formatInputDate } from "@/lib/utils"
 import { useState } from "react"
 import { ReportViewer } from "@/components/report-viewer"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -33,6 +33,7 @@ export default function ReportPageClient({
     const [includeEntries, setIncludeEntries] = useState(false)
     const [includeSummary, setIncludeSummary] = useState(true)
     const [displayMode, setDisplayMode] = useState<'raw' | 'balance'>('balance')
+    const [entriesDir, setEntriesDir] = useState<'asc' | 'desc'>('asc')
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -191,6 +192,20 @@ export default function ReportPageClient({
                                     onCheckedChange={(checked) => setIncludeEntries(checked)}
                                 />
                             </div>
+                            {includeEntries && (
+                                <div className="flex items-center justify-between pl-6">
+                                    <Label htmlFor="entriesDir">{t(language, "entriesOrder")}</Label>
+                                    <Select value={entriesDir} onValueChange={(value: 'asc' | 'desc') => setEntriesDir(value)}>
+                                        <SelectTrigger className="w-[240px]">
+                                            <SelectValue placeholder={t(language, "selectOrder")} />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="asc">{t(language, "oldestFirst")}</SelectItem>
+                                            <SelectItem value="desc">{t(language, "newestFirst")}</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
                             <div className="flex items-center justify-between">
                                 <Label htmlFor="includeSummary">{t(language, "includeBalanceSummary")}</Label>
                                 <Switch
@@ -215,6 +230,7 @@ export default function ReportPageClient({
                     includeParameters={includeParameters}
                     includeEntries={includeEntries}
                     includeSummary={includeSummary}
+                    entriesDir={entriesDir}
                     displayMode={displayMode}
                     language={language}
                     onClose={() => setReportData(null)}

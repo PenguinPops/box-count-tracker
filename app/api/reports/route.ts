@@ -1,19 +1,23 @@
 // app/api/reports/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
-import { getEntries } from '@/lib/db'; // Import your helper function
+import { getEntries } from '@/lib/db';
+import { auth } from '@/app/auth';
 
-export async function GET(request: NextRequest) {
+export const GET = auth(async function GET(req) {
+  if (!req.auth) {
+    return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+  }
+
   try {
-    const searchParams = request.nextUrl.searchParams;
+    const searchParams = req.nextUrl.searchParams;
 
     // Extract and deduplicate parameters
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const boxTypes = [...new Set(searchParams.getAll('boxTypes'))];
     const selectedCompanyNames = [...new Set(searchParams.getAll('companies'))];
-    const includeSummary = searchParams.get('includeSummary') === 'on' || 
-                         searchParams.get('includeSummary') === 'true';
+    const includeSummary = searchParams.get('includeSummary') === 'on' || searchParams.get('includeSummary') === 'true';
 
     // Validate parameters
     if (!startDate || !endDate) {
@@ -129,4 +133,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

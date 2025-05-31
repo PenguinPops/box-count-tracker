@@ -54,10 +54,10 @@ export default function StatisticsClient({
                   {stats.map((stat) => (
                     <tr key={stat[rowKey]} className="border-b">
                       <td className="py-3 px-4 font-medium">{stat[rowKey]}</td>
-                      <td className="text-right py-3 px-4">{stat.total_e2in}</td>
-                      <td className="text-right py-3 px-4">{stat.total_e1in}</td>
-                      <td className="text-right py-3 px-4">{stat.total_e2out}</td>
-                      <td className="text-right py-3 px-4">{stat.total_e1out}</td>
+                      <td className="text-right py-3 px-4">{Math.floor(stat.total_e2in)}</td>
+                      <td className="text-right py-3 px-4">{Math.floor(stat.total_e1in)}</td>
+                      <td className="text-right py-3 px-4">{Math.floor(stat.total_e2out)}</td>
+                      <td className="text-right py-3 px-4">{Math.floor(stat.total_e1out)}</td>
                       <td className={`text-right py-3 px-4 ${stat.total_e2out - stat.total_e2in >= 0 ? "text-green-600" : "text-red-600"}`}>
                         {stat.total_e2out - stat.total_e2in}
                       </td>
