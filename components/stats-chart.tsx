@@ -11,11 +11,25 @@ import {
   Title,
   Tooltip,
   Legend,
+  BarController,
+  LineController,
 } from 'chart.js'
 import { Chart } from 'react-chartjs-2'
 import { t, Lang } from '@/lib/i18n'
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend)
+// Register ALL required components including controllers
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  BarController,
+  LineController
+)
 
 type StatsChartProps = {
   stats: any[]
