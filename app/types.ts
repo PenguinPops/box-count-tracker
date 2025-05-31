@@ -17,3 +17,12 @@ export interface Entry {
     photo_url: string | null
     is_starting_balance: boolean
 }
+
+export interface User {
+    id: string
+    email: string
+    password: string
+    name: string
+    emailVerified: Date | null
+    is_admin: boolean
+}

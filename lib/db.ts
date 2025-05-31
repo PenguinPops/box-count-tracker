@@ -1,3 +1,4 @@
+import { User } from "@/app/types"
 import { neon } from "@neondatabase/serverless"
 
 // Create a SQL client with the connection string
@@ -300,6 +301,20 @@ export async function getLatestEntryDate(): Promise<string | null> {
     return result?.latest_date ?? null
   } catch (error) {
     console.error("Error getting latest entry date:", error)
+    return null
+  }
+}
+
+export async function getUserFromDb(email: string) {
+  try {
+    const result = await sql`
+      SELECT * FROM users 
+      WHERE email = ${email}
+    `
+    const user: User | null = result.length > 0 ? result[0] as User : null
+    return user
+  } catch (error) {
+    console.error("Error getting user from database:", error)
     return null
   }
 }

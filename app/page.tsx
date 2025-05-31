@@ -13,6 +13,8 @@ import { CompanyStats } from "@/components/dashboard/company-stats"
 import { TableSkeleton, CardSkeleton } from "@/components/skeleton"
 import { MonthlyStats } from "@/components/dashboard/monthly-stats"
 import { RecentEntries } from "@/components/dashboard/recent-entries"
+import { auth } from "@/app/auth"
+import NotLoggedIn from "@/components/not-logged-in"
 
 export default function Home() {
   return (
@@ -21,11 +23,16 @@ export default function Home() {
 }
 
 async function DashboardContent() {
-
   const includeStartingBalancesSetting = await getSetting("includeStartingBalances")
   const languageSetting = await getSetting("language")
   const language: Lang = languageSetting === "pl" ? "pl" : "en"
-  
+  const session = await auth()
+  if (!session || !session.user) {
+    
+    return (
+      <NotLoggedIn />
+    )
+  }
   const includeStartingBalances = includeStartingBalancesSetting !== "false"
   const companyStatsRaw = await getStatsByCompany(includeStartingBalances)
   const companyStats = companyStatsRaw.map(stat => ({
@@ -73,12 +80,14 @@ async function DashboardContent() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">{t(language, "dashboardTitle")}</h1>
         <div className="flex space-x-2">
+          {session.user.is_admin && (
           <Link href="/entries/new">
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
               {t(language, "newEntry")}
             </Button>
           </Link>
+          )}
           <Link href="/statistics">
             <Button variant="outline">
               <BarChart3 className="mr-2 h-4 w-4" />

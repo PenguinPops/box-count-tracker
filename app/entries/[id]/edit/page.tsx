@@ -6,6 +6,8 @@ import { notFound } from "next/navigation"
 import { DatabaseInitializer } from "@/components/db-initializer"
 import { Company } from "@/app/types"
 import { Lang, t } from "@/lib/i18n"
+import { auth } from "@/app/auth"
+import NotLoggedIn from "@/components/not-logged-in"
 
 interface PageProps {
   params: { id: string }
@@ -44,6 +46,13 @@ export default async function EditEntryPage({ params }: PageProps) {
   const entry: Entry = entryData as Entry
   console.log("Editing entry:", entry)
 
+  const session = await auth()
+  if (!session || !session.user || !session.user.is_admin) {
+
+    return (
+      <NotLoggedIn />
+    )
+  }
   return (
     <>
       <div className="mb-6">

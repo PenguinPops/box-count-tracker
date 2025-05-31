@@ -2,19 +2,27 @@ import { getCompanies, getSetting } from "@/lib/db"
 import CSVImport from "@/components/csv-import"
 import { Company } from "@/app/types"
 import { t, Lang } from "@/lib/i18n"
+import { auth } from "../auth"
+import NotLoggedIn from "@/components/not-logged-in"
 
 export default async function ImportPage() {
     const [companiesData, languageSetting] = await Promise.all([
         getCompanies(),
         getSetting("language")
     ])
-    
+
     const companies: Company[] = companiesData.map((company) => ({
         id: company.id,
         name: company.name
     }))
 
     const language: Lang = languageSetting as Lang;
+    const session = await auth()
+    if (!session || !session.user || !session.user.is_admin) {
+        return (
+            <NotLoggedIn />
+        )
+    }
 
     if (!companies || companies.length === 0) {
         return (

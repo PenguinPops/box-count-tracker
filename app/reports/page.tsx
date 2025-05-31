@@ -3,6 +3,8 @@
 import { getCompanies, getEarliestEntryDate, getLatestEntryDate } from "@/lib/db"
 import ReportPageClient from "@/components/report-page-client"
 import { getSetting } from "@/lib/db"
+import { auth } from "../auth"
+import NotLoggedIn from "@/components/not-logged-in"
 
 export default async function ReportPage() {
     const companies = await getCompanies()
@@ -15,6 +17,14 @@ export default async function ReportPage() {
 
     const languageSetting = await getSetting("language")
     const language = languageSetting === "pl" ? "pl" : "en"
+
+    const session = await auth()
+    if (!session || !session.user) {
+
+        return (
+            <NotLoggedIn />
+        )
+    }
 
     return (
         <ReportPageClient

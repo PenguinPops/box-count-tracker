@@ -5,6 +5,8 @@ import EntryForm from "@/components/entry-form"
 import { DatabaseInitializer } from "@/components/db-initializer"
 import { Company } from "@/app/types"
 import { Lang, t } from "@/lib/i18n"
+import { auth } from "@/app/auth"
+import NotLoggedIn from "@/components/not-logged-in"
 
 export default async function NewEntryPage() {
 
@@ -15,6 +17,13 @@ export default async function NewEntryPage() {
 
   const languageSetting = await getSetting("language")
   const language: Lang = languageSetting === "pl" ? "pl" : "en"
+    const session = await auth()
+    if (!session || !session.user || !session.user.is_admin) {
+      
+      return (
+        <NotLoggedIn />
+      )
+    }
 
   return (
     <>

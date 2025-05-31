@@ -1,3 +1,6 @@
+import { sign } from "crypto";
+import { signOut } from "next-auth/react";
+
 // lib/i18n.ts
 export type Lang = "en" | "pl";
 
@@ -112,7 +115,7 @@ export const translations = {
         importEntries: "Import {count} Entries",
         selectDeselectAll: "Select/Deselect All",
         rowsSelected: "{selected} of {total} rows selected",
-        include: "Include", 
+        include: "Include",
         e2Return: "E2 Return",
         e1Return: "E1 Return",
         startingBalance: "Starting Balance",
@@ -134,7 +137,7 @@ export const translations = {
         unexpectedErrorDuringImport: "An unexpected error occurred during import",
         // newentry
         createNewFinancialEntry: "Create a new financial entry",
-        entryDetails: "Entry Details", 
+        entryDetails: "Entry Details",
         enterFinancialData: "Enter the financial data for this entry",
         // editentry
         confirmDeleteEntry: "Are you sure you want to delete this entry?",
@@ -187,7 +190,36 @@ export const translations = {
         at: "at",
         all: "All",
         yes: "Yes",
-        no: "No"
+        no: "No",
+        // auth handle
+        account: "Account Management",
+        manageAccount: "Manage your account and logout",
+        notSignedIn: "You are not signed in",
+        signIn: "Sign In",
+        signInTitle: "Sign in to your account",
+        signInSubtitle: "Welcome back! Please enter your details.",
+        emailLabel: "Email address",
+        emailPlaceholder: "Enter your email",
+        passwordLabel: "Password",
+        passwordPlaceholder: "Enter your password",
+        signInButton: "Sign in",
+        signingIn: "Signing in...",
+        showPassword: "Show password",
+        hidePassword: "Hide password",
+        orContinueWith: "Or continue with",
+        continueWithGoogle: "Continue with Google",
+        signOut: "Sign Out",
+
+        // Error messages
+        invalidCredentials: "Invalid email or password",
+        invalidEmail: "Please enter a valid email address",
+        passwordRequired: "Password is required",
+        unexpectedError: "An unexpected error occurred",
+
+        // Not logged in page
+        notLoggedInTitle: "Access Restricted",
+        notLoggedInDescription: "You need to be signed in to access this page. Please log in to continue.",
+
     },
     pl: {
         // ustawienia
@@ -260,7 +292,7 @@ export const translations = {
         // nawigacja
         navTitle: "Statystyki Pojemników",
         dashboard: "Panel główny",
-        reports: "Raporty", 
+        reports: "Raporty",
         import: "Import",
         //wykresy
         intakeOutput: "Wpływ/Wypływ",
@@ -376,7 +408,35 @@ export const translations = {
         at: "o",
         all: "Wszystkie",
         yes: "Tak",
-        no: "Nie"
+        no: "Nie",
+        //auth handle
+        account: "Zarządzanie kontem",
+        manageAccount: "Zarządzaj swoim kontem i wyloguj się",
+        notSignedIn: "Nie jesteś zalogowany",
+        signIn: "Zaloguj się",
+        signInTitle: "Zaloguj się do swojego konta",
+        signInSubtitle: "Witaj ponownie! Wprowadź swoje dane.",
+        emailLabel: "Adres e-mail",
+        emailPlaceholder: "Wprowadź swój e-mail",
+        passwordLabel: "Hasło",
+        passwordPlaceholder: "Wprowadź swoje hasło",
+        signInButton: "Zaloguj się",
+        signingIn: "Logowanie...",
+        showPassword: "Pokaż hasło",
+        hidePassword: "Ukryj hasło",
+        orContinueWith: "Lub kontynuuj z",
+        continueWithGoogle: "Kontynuuj z Google",
+        signOut: "Wyloguj się",
+      
+        // Error messages
+        invalidCredentials: "Nieprawidłowy e-mail lub hasło",
+        invalidEmail: "Wprowadź prawidłowy adres e-mail",
+        passwordRequired: "Hasło jest wymagane",
+        unexpectedError: "Wystąpił nieoczekiwany błąd",
+      
+        // Not logged in page
+        notLoggedInTitle: "Dostęp ograniczony",
+        notLoggedInDescription: "Musisz być zalogowany, aby uzyskać dostęp do tej strony. Zaloguj się, aby kontynuować.",
     },
 };
 

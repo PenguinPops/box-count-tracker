@@ -12,11 +12,13 @@ import { t, Lang } from "@/lib/i18n"
 export default function EntriesTable({
     initialEntries,
     companyNames = [],
-    lang
+    lang,
+    showActions = false
 }: {
     initialEntries: any[]
     companyNames: string[]
     lang: Lang
+    showActions?: boolean
 }) {
     const [entries, setEntries] = useState(initialEntries)
     const [selectedIds, setSelectedIds] = useState<number[]>([])
@@ -98,11 +100,13 @@ export default function EntriesTable({
         return (
             <div className="text-center py-6">
                 <p className="text-muted-foreground">{t(lang, "noEntries")}</p>
-                <Link href="/entries/new">
-                    <Button variant="outline" className="mt-2">
-                        {t(lang, "addFirstEntry")}
-                    </Button>
-                </Link>
+                {showActions && (
+                    <Link href="/entries/new">
+                        <Button variant="outline" className="mt-2">
+                            {t(lang, "addFirstEntry")}
+                        </Button>
+                    </Link>
+                )}
             </div>
         )
     }
@@ -132,7 +136,7 @@ export default function EntriesTable({
                 </select>
             </div>
 
-            {selectedIds.length > 0 && (
+            {selectedIds.length > 0 && showActions && (
                 <div className="flex justify-end mb-4">
                     <Button variant="destructive" onClick={handleDelete} disabled={loading}>
                         <Trash2 className="mr-2 h-4 w-4" />
@@ -146,10 +150,12 @@ export default function EntriesTable({
                     <thead>
                         <tr className="border-b">
                             <th className="text-center py-3 px-2">
-                                <Checkbox
-                                    checked={selectedIds.length === entries.length}
-                                    onCheckedChange={toggleSelectAll}
-                                />
+                                {showActions && (
+                                    <Checkbox
+                                        checked={selectedIds.length === entries.length}
+                                        onCheckedChange={toggleSelectAll}
+                                    />
+                                )}
                             </th>
                             <th
                                 className="text-left py-3 px-2 cursor-pointer"
@@ -188,17 +194,19 @@ export default function EntriesTable({
                                 {t(lang, "e1Output")} {sortKey === "e1out" && (sortOrder === "asc" ? "↑" : "↓")}
                             </th>
                             <th className="text-center py-3 px-2">{t(lang, "photo")}</th>
-                            <th className="text-center py-3 px-2">{t(lang, "actions")}</th>
+                            {showActions && <th className="text-center py-3 px-2">{t(lang, "actions")}</th>}
                         </tr>
                     </thead>
                     <tbody>
                         {filteredAndSortedEntries.map((entry) => (
                             <tr key={entry.id} className="border-b hover:bg-muted/50">
                                 <td className="text-center py-3 px-2">
-                                    <Checkbox
-                                        checked={selectedIds.includes(entry.id)}
-                                        onCheckedChange={() => toggleSelect(entry.id)}
-                                    />
+                                    {showActions && (
+                                        <Checkbox
+                                            checked={selectedIds.includes(entry.id)}
+                                            onCheckedChange={() => toggleSelect(entry.id)}
+                                        />
+                                    )}
                                 </td>
                                 <td className="py-3 px-2">
                                     {new Date(entry.entry_date).toLocaleDateString(lang === "pl" ? "pl-PL" : "en-US")}
@@ -230,13 +238,15 @@ export default function EntriesTable({
                                         <span className="text-muted-foreground">-</span>
                                     )}
                                 </td>
-                                <td className="text-center py-3 px-2">
-                                    <Link href={`/entries/${entry.id}/edit`}>
-                                        <Button variant="ghost" size="icon">
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                    </Link>
-                                </td>
+                                {showActions && (
+                                    <td className="text-center py-3 px-2">
+                                        <Link href={`/entries/${entry.id}/edit`}>
+                                            <Button variant="ghost" size="icon">
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                        </Link>
+                                    </td>
+                                )}
                             </tr>
                         ))}
                     </tbody>

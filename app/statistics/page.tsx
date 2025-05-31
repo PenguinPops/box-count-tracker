@@ -6,6 +6,8 @@ import {
   getSetting
 } from "@/lib/db";
 import StatisticsClient from "@/components/statistics-client";
+import NotLoggedIn from "@/components/not-logged-in";
+import { auth } from "../auth";
 
 export default async function StatisticsPage() {
 
@@ -14,6 +16,13 @@ export default async function StatisticsPage() {
     const includeStartingBalances = includeStartingBalancesSetting !== "false"; // default to true
     const languageSetting = await getSetting("language");
     const language = languageSetting === "pl" ? "pl" : "en"; // default to "en"
+
+    const session = await auth();
+    if (!session || !session.user) {
+      return (
+        <NotLoggedIn />
+      );
+    }
 
     const [companyStats, monthlyStats, quarterlyStats] = await Promise.all([
       getStatsByCompany(includeStartingBalances),

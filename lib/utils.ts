@@ -67,3 +67,22 @@ export const formatInputDate = (date: Date | string | null | undefined) => {
   const d = typeof date === "string" ? new Date(date) : date
   return d.toISOString().slice(0, 10) 
 }
+
+// Updated utility function
+export async function saltAndHashPassword(password: string): Promise<string> {
+  const response = await fetch('/api/auth/hash-password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ password }),
+  })
+  
+  if (!response.ok) {
+    throw new Error('Failed to hash password')
+  }
+  
+  const { hashedPassword } = await response.json()
+  console.log("Hashed password:", hashedPassword)
+  return hashedPassword
+}
