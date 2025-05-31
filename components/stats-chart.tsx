@@ -51,11 +51,24 @@ const StatsChart: React.FC<StatsChartProps> = ({ stats, labelKey, lang }) => {
     if (filter === 'both' || filter === 'e2') {
       datasets.push(
         {
+          type: 'line' as const,
+          label: t(lang, 'balanceE2'),
+          data: reversedStats.map((item) => item.total_e2out - item.total_e2in),
+          borderColor: 'rgba(153,255,255,1)',
+          backgroundColor: 'rgba(153,255,255,0.8)',
+          borderWidth: 5,
+          fill: false,
+          tension: 0,
+          yAxisID: 'y1',
+          order: 1,
+        },
+        {
           type: 'bar' as const,
           label: t(lang, 'e2Intake'),
           data: reversedStats.map((item) => item.total_e2in),
           backgroundColor: 'rgba(153,100,255,0.5)',
           yAxisID: 'y',
+          order: 2,
         },
         {
           type: 'bar' as const,
@@ -63,17 +76,7 @@ const StatsChart: React.FC<StatsChartProps> = ({ stats, labelKey, lang }) => {
           data: reversedStats.map((item) => item.total_e2out),
           backgroundColor: 'rgba(153,150,255,0.5)',
           yAxisID: 'y',
-        },
-        {
-          type: 'line' as const,
-          label: t(lang, 'balanceE2'),
-          data: reversedStats.map((item) => item.total_e2out - item.total_e2in),
-          borderColor: 'rgba(153,255,255,1)',
-          backgroundColor: 'rgba(153,255,255,0.8)',
-          borderWidth: 2,
-          fill: false,
-          tension: 0.4,
-          yAxisID: 'y1',
+          order: 2,
         }
       )
     }
@@ -81,11 +84,24 @@ const StatsChart: React.FC<StatsChartProps> = ({ stats, labelKey, lang }) => {
     if (filter === 'both' || filter === 'e1') {
       datasets.push(
         {
+          type: 'line' as const,
+          label: t(lang, 'balanceE1'),
+          data: reversedStats.map((item) => item.total_e1out - item.total_e1in),
+          borderColor: 'rgba(255,200,153,1)',
+          backgroundColor: 'rgba(255,255,153,0.8)',
+          borderWidth: 5,
+          fill: false,
+          tension: 0,
+          yAxisID: 'y1',
+          order: 1,
+        },
+        {
           type: 'bar' as const,
           label: t(lang, 'e1Intake'),
           data: reversedStats.map((item) => item.total_e1in),
           backgroundColor: 'rgba(255,100,153,0.5)',
           yAxisID: 'y',
+          order: 2,
         },
         {
           type: 'bar' as const,
@@ -93,17 +109,7 @@ const StatsChart: React.FC<StatsChartProps> = ({ stats, labelKey, lang }) => {
           data: reversedStats.map((item) => item.total_e1out),
           backgroundColor: 'rgba(255,150,153,0.5)',
           yAxisID: 'y',
-        },
-        {
-          type: 'line' as const,
-          label: t(lang, 'balanceE1'),
-          data: reversedStats.map((item) => item.total_e1out - item.total_e1in),
-          borderColor: 'rgba(255,200,153,1)',
-          backgroundColor: 'rgba(255,255,153,0.8)',
-          borderWidth: 2,
-          fill: false,
-          tension: 0.4,
-          yAxisID: 'y1',
+          order: 2,
         }
       )
     }
@@ -143,9 +149,9 @@ const StatsChart: React.FC<StatsChartProps> = ({ stats, labelKey, lang }) => {
           text: t(lang, 'balance'),
         },
         grid: {
-          drawOnChartArea: false,
-          borderDash: [5, 5],
-          color: (ctx: any) => (ctx.tick.value === 0 ? 'rgba(128,128,128,1)' : 'transparent'),
+          drawOnChartArea: true,
+          borderDash: [3, 3],
+          color: (ctx: any) => (ctx.tick.value === 0 ? 'rgba(50,50,50,1)' : 'transparent'),
         },
       },
     },

@@ -18,6 +18,72 @@ interface ProcessedEntry {
   include: boolean
 }
 
+// Column mapping for different CSV formats
+const COLUMN_MAPPINGS = {
+  date: ['data'],
+  company: ['firma'],
+  e2intake: ['E2 box intake', 'pojemniki przyjęte E2'],
+  e1intake: ['E1 box intake', 'pojemniki przyjęte E1'],
+  e2return: ['E2 box return', 'pojemniki oddane E2'],
+  e1return: ['E1 box return', 'pojemniki oddane E1']
+}
+
+function normalizeDate(dateStr: string): string {
+  if (!dateStr) return dateStr
+  
+  // Handle both DD/MM/YYYY and DD.MM.YYYY formats
+  const normalizedDate = dateStr.replace(/\./g, '/')
+  
+  // If it's already in a standard format, return as is
+  if (normalizedDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return normalizedDate
+  }
+  
+  // Convert DD/MM/YYYY to YYYY-MM-DD for consistency
+  const parts = normalizedDate.split('/')
+  if (parts.length === 3) {
+    const [day, month, year] = parts
+    if (day.length <= 2 && month.length <= 2 && year.length === 4) {
+      return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+    }
+  }
+  
+  return dateStr
+}
+
+function findColumnValue(row: any, possibleKeys: string[]): any {
+  for (const key of possibleKeys) {
+    if (row.hasOwnProperty(key) && row[key] !== undefined && row[key] !== null) {
+      return row[key]
+    }
+  }
+  return null
+}
+
+// Custom CSV parser to handle semicolon-delimited files
+function parseCSVWithSemicolon(csvText: string): any[] {
+  const lines = csvText.trim().split('\n')
+  if (lines.length < 2) return []
+  
+  // Get headers from first line
+  const headers = lines[0].split(';').map(h => h.trim())
+  
+  // Parse data rows
+  const data = []
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(';').map(v => v.trim())
+    const row: any = {}
+    
+    headers.forEach((header, index) => {
+      row[header] = values[index] || ''
+    })
+    
+    data.push(row)
+  }
+  
+  return data
+}
+
 export default function CSVImport({ companies = [], lang }: { companies?: Company[], lang?: Lang }) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
@@ -58,30 +124,54 @@ export default function CSVImport({ companies = [], lang }: { companies?: Compan
     setLoading(true)
     try {
       const text = await file.text()
-      const data = parseCSV(text)
+      
+      console.log("Raw CSV text:", text.substring(0, 200) + "...")
+      
+      let data: any[]
+      
+      // Check if the CSV uses semicolons as delimiters
+      const firstLine = text.split('\n')[0]
+      if (firstLine.includes(';') && firstLine.split(';').length > firstLine.split(',').length) {
+        console.log("Detected semicolon-delimited CSV")
+        data = parseCSVWithSemicolon(text)
+      } else {
+        console.log("Using standard CSV parser")
+        data = parseCSV(text)
+      }
 
       const mappedData = data.map((row: any) => {
-        const company = companies.find(c => c.name.toLowerCase() === row.firma?.toLowerCase())
+        const dateValue = findColumnValue(row, COLUMN_MAPPINGS.date)
+        const companyValue = findColumnValue(row, COLUMN_MAPPINGS.company)
+        const e2IntakeValue = findColumnValue(row, COLUMN_MAPPINGS.e2intake)
+        const e1IntakeValue = findColumnValue(row, COLUMN_MAPPINGS.e1intake)
+        const e2ReturnValue = findColumnValue(row, COLUMN_MAPPINGS.e2return)
+        const e1ReturnValue = findColumnValue(row, COLUMN_MAPPINGS.e1return)
+
+
+        const company = companies.find(c => 
+          c.name.toLowerCase() === companyValue?.toLowerCase()
+        )
 
         return {
           entry: {
-            entry_date: row.data,
+            entry_date: normalizeDate(dateValue || ''),
             company_id: company?.id || 0,
-            companyName: row.firma || 'Unknown',
-            E2in: parseInt(row['E2 box intake']) || 0,
-            E1in: parseInt(row['E1 box intake']) || 0,
-            E2out: parseInt(row['E2 box return']) || 0,
-            E1out: parseInt(row['E1 box return']) || 0,
+            companyName: companyValue || 'Unknown',
+            E2in: parseInt(e2IntakeValue) || 0,
+            E1in: parseInt(e1IntakeValue) || 0,
+            E2out: parseInt(e2ReturnValue) || 0,
+            E1out: parseInt(e1ReturnValue) || 0,
             is_starting_balance: false,
           },
           include: !!company
         }
       })
 
+      console.log("Mapped data:", mappedData)
       setProcessedData(mappedData)
     } catch (err) {
       setError(t(language, "failedToParseCsv"))
-      console.error(err)
+      console.error("CSV parsing error:", err)
     } finally {
       setLoading(false)
     }
@@ -95,7 +185,6 @@ export default function CSVImport({ companies = [], lang }: { companies?: Compan
     setSuccess(null)
 
     try {
-      // Prepare data for import
       const entriesToImport = processedData
         .filter(row => row.include && row.entry.company_id !== 0)
         .map(({ entry }) => ({
@@ -315,6 +404,7 @@ export default function CSVImport({ companies = [], lang }: { companies?: Compan
           <li>{t(language, "csvRequirement3")}</li>
           <li>{t(language, "csvRequirement4")}</li>
           <li>{t(language, "csvRequirement5")}</li>
+          <li>{t(language, "csvRequirement6")}</li>
         </ul>
       </div>
     </div>

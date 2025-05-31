@@ -92,7 +92,7 @@ export function ReportViewer({
 
         const formattedStartDate = new Date(reportData.parameters.startDate).toISOString().split('T')[0]
         const formattedEndDate = new Date(reportData.parameters.endDate).toISOString().split('T')[0]
-        pdf.save(`report_${formattedStartDate}_to_${formattedEndDate}.pdf`)
+        pdf.save(`raport_stanu_pojemnikow_${formatDate(formattedStartDate)}_${formatDate(formattedEndDate)}.pdf`)
     }
 
     if (!isClient || !reportData) return null
@@ -428,7 +428,7 @@ function ReportContent({
                                                     <td></td>
                                                 </tr>
                                             );
-                                            if (index > 16) {
+                                            if (index >= 16) {
                                                 rows.push(
                                                     <tr key={`empty-${index + 2}`} className="h-8">
                                                         <td></td>
