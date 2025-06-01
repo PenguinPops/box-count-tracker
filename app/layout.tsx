@@ -7,6 +7,7 @@ import { MainNav } from "@/components/nav"
 import { getSetting, isDatabaseConnected, isDatabaseInitialized } from "@/lib/db"
 import DatabaseReconnect from "@/components/db-reconnect"
 import { DatabaseInitializer } from "@/components/db-initializer"
+import { Analytics } from "@vercel/analytics/next"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -99,6 +100,7 @@ export default async function RootLayout({
   return (
     <html lang={lang} suppressHydrationWarning>
       <body className={inter.className}>
+      <Analytics />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <div className="flex min-h-screen flex-col">
             <MainNav language={lang} />
