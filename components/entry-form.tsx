@@ -12,16 +12,31 @@ import { addEntry, updateEntry, deleteEntry, handlePhotoUpload } from "@/app/act
 import { AlertCircle, Upload } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { format } from "date-fns"
-import { Company, Entry } from "@/app/types"
+import { Company } from "@/app/types"
 import { Lang, t } from "@/lib/i18n"
 
-interface EntryFormProps {
+export interface EntryFormProps {
   companies: Company[]
   entry?: Entry
   lang: Lang
+  isNew: boolean
+  formRef?: React.RefObject<HTMLFormElement>
+  onSubmit?: (data: FormData) => Promise<void>
 }
 
-export default function EntryForm({ companies, entry, lang }: EntryFormProps) {
+interface Entry {
+  id: number
+  entry_date: string
+  company_id: number
+  e2in: number
+  e1in: number
+  e2out: number
+  e1out: number
+  photo_url?: string | null
+  is_starting_balance?: boolean
+}
+
+export default function EntryForm({ companies, entry, lang, isNew, formRef, onSubmit }: EntryFormProps) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -54,7 +69,7 @@ export default function EntryForm({ companies, entry, lang }: EntryFormProps) {
       formData.set("isStartingBalance", isStartingBalance.toString())
 
       // Submit the form
-      const result = entry ? await updateEntry(entry.id, formData) : await addEntry(formData)
+      const result = isNew ? await addEntry(formData) : await updateEntry(entry!.id, formData)
 
       if (result.error) {
         setError(result.error)
@@ -70,7 +85,7 @@ export default function EntryForm({ companies, entry, lang }: EntryFormProps) {
   }
 
   const handleDelete = async () => {
-    if (!entry) return
+    if (isNew || !entry) return
 
     if (confirm(t(language, "confirmDeleteEntry"))) {
       setLoading(true)
@@ -95,7 +110,18 @@ export default function EntryForm({ companies, entry, lang }: EntryFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form
+      ref={formRef}
+      onSubmit={async (e) => {
+        e.preventDefault()
+        if (onSubmit) {
+          await onSubmit(new FormData(e.currentTarget))
+        } else {
+          await handleSubmit(e)
+        }
+      }}
+      className="space-y-6"
+    >
       {error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -105,19 +131,20 @@ export default function EntryForm({ companies, entry, lang }: EntryFormProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="entryDate">{t(language, "date")}</Label>
+          <Label htmlFor="entryDate" className="text-xl sm:text-2xl">{t(language, "date")}</Label>
           <Input
             id="entryDate"
             name="entryDate"
             type="date"
-            defaultValue={entry ? format(new Date(entry.entry_date), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd")}
+            className=""
+            defaultValue={!isNew && entry ? format(new Date(entry.entry_date), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd")}
             required
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="companyId">{t(language, "company")}</Label>
-          <Select name="companyId" defaultValue={entry?.company_id?.toString()}>
+          <Label htmlFor="companyId" className="text-xl sm:text-2xl">{t(language, "company")}</Label>
+          <Select name="companyId" defaultValue={!isNew ? entry?.company_id?.toString() : undefined}>
             <SelectTrigger>
               <SelectValue placeholder={t(language, "selectCompany")} />
             </SelectTrigger>
@@ -131,24 +158,64 @@ export default function EntryForm({ companies, entry, lang }: EntryFormProps) {
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="E2in">{t(language, "e2Intake")}</Label>
-          <Input id="E2in" name="E2in" type="number" step="1" defaultValue={entry?.E2in || 0} required />
+        {/* E2 Card */}
+        <div className="rounded-lg border bg-card p-6 shadow-sm">
+          <h3 className="text-lg font-semibold mb-4">E2</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="E2in">{t(language, "e2Intake")}</Label>
+              <Input
+                id="E2in"
+                name="E2in"
+                type="number"
+                step="1"
+                defaultValue={!isNew ? Math.floor(entry!.e2in) || 0 : 0}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="E2out">{t(language, "e2Output")}</Label>
+              <Input
+                id="E2out"
+                name="E2out"
+                type="number"
+                step="1"
+                defaultValue={!isNew ? Math.floor(entry!.e2out) || 0 : 0}
+                required
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="E1in">{t(language, "e1Intake")}</Label>
-          <Input id="E1in" name="E1in" type="number" step="1" defaultValue={entry?.E1in || 0} required />
-        </div>
+        {/* E1 Card */}
+        <div className="rounded-lg border bg-card p-6 shadow-sm">
+          <h3 className="text-lg font-semibold mb-4">E1</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="E1in">{t(language, "e1Intake")}</Label>
+              <Input
+                id="E1in"
+                name="E1in"
+                type="number"
+                step="1"
+                defaultValue={!isNew ? Math.floor(entry!.e1in) || 0 : 0}
+                required
+              />
+            </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="E2out">{t(language, "e2Output")}</Label>
-          <Input id="E2out" name="E2out" type="number" step="1" defaultValue={entry?.E2out || 0} required />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="E1out">{t(language, "e1Output")}</Label>
-          <Input id="E1out" name="E1out" type="number" step="1" defaultValue={entry?.E1out || 0} required />
+            <div className="space-y-2">
+              <Label htmlFor="E1out">{t(language, "e1Output")}</Label>
+              <Input
+                id="E1out"
+                name="E1out"
+                type="number"
+                step="1"
+                defaultValue={!isNew ? Math.floor(entry!.e1out) || 0 : 0}
+                required
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -184,13 +251,13 @@ export default function EntryForm({ companies, entry, lang }: EntryFormProps) {
           {t(language, "cancel")}
         </Button>
         <div className="flex gap-2">
-          {entry && (
+          {!isNew && (
             <Button type="button" variant="destructive" onClick={handleDelete} disabled={loading}>
               {t(language, "delete")}
             </Button>
           )}
           <Button type="submit" disabled={loading}>
-            {loading ? t(language, "saving") : entry ? t(language, "updateEntry") : t(language, "createEntry")}
+            {loading ? t(language, "saving") : isNew ? t(language, "createEntry") : t(language, "updateEntry")}
           </Button>
         </div>
       </div>

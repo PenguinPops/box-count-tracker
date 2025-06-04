@@ -45,6 +45,9 @@ export const translations = {
         monthlyStatsDesc: "Data by month",
         recentEntries: "Recent Entries",
         recentEntriesDesc: "Latest entries",
+        noEntriesYet: "No entries yet. Add your first entry to get started.",
+
+        viewAllEntries: "View All Entries",
         // stats
         statistics: "Statistics",
         statisticsDescription: "Analyze box counts by different dimensions",
@@ -73,6 +76,8 @@ export const translations = {
         photo: "Photo",
         actions: "Actions",
         proofForEntry: "Proof for entry {id}",
+        savingAll: "Saving All...",
+        createAllEntries: "Create All Entries",
         // navigation
         navTitle: "Box Count Tracker",
         dashboard: "Dashboard",
@@ -93,7 +98,7 @@ export const translations = {
         endDate: "End Date",
         boxTypes: "Box Types",
         displayMode: "Display Mode",
-        showRawValues: "Show Raw Values",
+        showRawValues: "Show Values",
         showBalances: "Show Balances",
         selectDisplayMode: "Select display mode",
         includeParameters: "Include Parameters",
@@ -106,6 +111,8 @@ export const translations = {
         oldestFirst: "Oldest First",
         entriesOrder: "Entries Order",
         selectOrder: "Select entries order",
+        setEarliestDate: "Set Earliest Date",
+        setLatestDate: "Set Latest Date",
         // import
         importCSVEntries: "Import Entries from CSV",
         noCompaniesFound: "No companies found in database.",
@@ -265,6 +272,8 @@ export const translations = {
         monthlyStatsDesc: "Dane statystyczne według miesiąca",
         recentEntries: "Ostatnie Wpisy",
         recentEntriesDesc: "Najnowsze wpisy",
+        noEntriesYet: "Brak wpisów. Dodaj swój pierwszy wpis, aby rozpocząć.",
+        viewAllEntries: "Zobacz wszystkie wpisy",
         // staty
         statistics: "Statystyki",
         statisticsDescription: "Analizuj liczby pojemników według różnych wymiarów",
@@ -293,6 +302,8 @@ export const translations = {
         photo: "Zdjęcie",
         actions: "Akcje",
         proofForEntry: "Dowód dla wpisu {id}",
+        savingAll: "Zapisywanie wszystkich...",
+        createAllEntries: "Utwórz wszystkie wpisy",
         // nawigacja
         navTitle: "Statystyki Pojemników",
         dashboard: "Panel główny",
@@ -313,7 +324,7 @@ export const translations = {
         endDate: "Data Zakończenia",
         boxTypes: "Typy Pojemników",
         displayMode: "Tryb Wyświetlania",
-        showRawValues: "Pokaż Surowe Wartości",
+        showRawValues: "Pokaż Wartości",
         showBalances: "Pokaż Bilansy",
         selectDisplayMode: "Wybierz tryb wyświetlania",
         includeParameters: "Uwzględnij Parametry",
@@ -326,6 +337,8 @@ export const translations = {
         oldestFirst: "Sortuj od najstarszych",
         entriesOrder: "Kolejność wpisów",
         selectOrder: "Wybierz kolejność wpisów",
+        setEarliestDate: "Ustaw najwcześniejszą datę",
+        setLatestDate: "Ustaw najnowszą datę",
         // import
         importCSVEntries: "Importuj wpisy z pliku CSV",
         noCompaniesFound: "Nie znaleziono żadnych firm w bazie danych",
@@ -363,6 +376,7 @@ export const translations = {
         createNewFinancialEntry: "Utwórz nowy wpis finansowy",
         entryDetails: "Szczegóły wpisu",
         enterFinancialData: "Wprowadź dane finansowe dla tego wpisu",
+
         // editentry
 
         confirmDeleteEntry: "Czy na pewno chcesz usunąć ten wpis?",

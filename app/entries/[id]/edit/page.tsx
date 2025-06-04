@@ -1,17 +1,13 @@
 import { MainNav } from "@/components/nav"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getCompanies, getEntryById, isDatabaseInitialized, getSetting } from "@/lib/db"
-import EntryEditForm from "@/components/entry-edit-form"
+import EntryForm from "@/components/entry-form"
 import { notFound } from "next/navigation"
 import { DatabaseInitializer } from "@/components/db-initializer"
 import { Company } from "@/app/types"
 import { Lang, t } from "@/lib/i18n"
 import { auth } from "@/app/auth"
 import NotLoggedIn from "@/components/not-logged-in"
-
-interface PageProps {
-  params: { id: string }
-}
 
 interface Entry {
   id: number
@@ -21,12 +17,21 @@ interface Entry {
   e1in: number
   e2out: number
   e1out: number
-  photo_url: string | null
-  is_starting_balance: boolean
+  photo_url?: string | null
+  is_starting_balance?: boolean
+}
+
+interface PageProps {
+  params: { id: string }
 }
 
 export default async function EditEntryPage({ params }: PageProps) {
-  const id = Number.parseInt(params.id)
+  const paramsId = await params;
+  const id = parseInt(paramsId.id, 10)
+  if (isNaN(id) || id <= 0) {
+    notFound()
+  }
+
   const [entryData, rawCompanies, languageSetting]: [Record<string, any> | null, Record<string, any>[], string | null] = await Promise.all([
     getEntryById(id),
     getCompanies(),
@@ -44,7 +49,6 @@ export default async function EditEntryPage({ params }: PageProps) {
   }
 
   const entry: Entry = entryData as Entry
-  console.log("Editing entry:", entry)
 
   const session = await auth()
   if (!session || !session.user || !session.user.is_admin) {
@@ -66,7 +70,7 @@ export default async function EditEntryPage({ params }: PageProps) {
           <CardDescription>{t(language, "enterFinancialData")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <EntryEditForm companies={companies} entry={entry} lang={language} />
+          <EntryForm companies={companies} entry={entry} lang={language} isNew={false} />
         </CardContent>
       </Card>
     </>

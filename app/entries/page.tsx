@@ -30,7 +30,7 @@ export default async function EntriesPage() {
   return (
     <>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">{t(language, "boxCountEntries")}</h1>
+        <h1 className="sm:text-3xl text-xl font-bold">{t(language, "boxCountEntries")}</h1>
         {session.user.is_admin && (
         <Link href="/entries/new">
           <Button>

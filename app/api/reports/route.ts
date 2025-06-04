@@ -33,18 +33,45 @@ export const GET = auth(async function GET(req) {
       );
     }
 
+    const toYYYYMMDD = (date: Date | string) => {
+      const d = new Date(date);
+      return [
+        d.getFullYear(),
+        String(d.getMonth() + 1).padStart(2, '0'),
+        String(d.getDate()).padStart(2, '0')
+      ].join('');
+    };
+
     // --- 1. Fetch Entries from Database ---
     // Get all entries (with a high limit to ensure we get all relevant ones)
     const allEntries = await getEntries(10000); // Adjust limit as needed
     
     // Filter entries by date range and other parameters
     const filteredEntries = allEntries.filter(entry => {
-      const entryDate = new Date(entry.entry_date);
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      
-      // Check date range
-      if (entryDate < start || entryDate > end) return false;
+      const getDateParts = (date: Date | string) => {
+        const d = new Date(date);
+        return {
+          year: d.getFullYear(),
+          month: d.getMonth() + 1, // months are 0-indexed
+          day: d.getDate()
+        };
+      };
+    
+      // Convert to comparable YYYYMMDD string
+      const toDateKey = (parts: {year: number, month: number, day: number}) => {
+        return `${parts.year}${String(parts.month).padStart(2, '0')}${String(parts.day).padStart(2, '0')}`;
+      };
+    
+      const entryKey = toDateKey(getDateParts(entry.entry_date));
+      const startKey = toDateKey(getDateParts(startDate));
+      const endKey = toDateKey(getDateParts(endDate));
+    
+      // Simple string comparison
+      if (entryKey < startKey || entryKey > endKey) {
+        console.log(`Skipping entry ${entry.id} (${entryKey}) outside range ${startKey}-${endKey}`);
+        return false;
+      }
+      // console.log(`Including entry ${entry.id} (${entryKey}) within range ${startKey}-${endKey}`);
       
       // Check company filter if companies are selected
       if (selectedCompanyNames.length > 0 && !selectedCompanyNames.includes(entry.company)) {
@@ -57,9 +84,7 @@ export const GET = auth(async function GET(req) {
     // Format entries for the report
     const reportEntries = filteredEntries.map(entry => ({
       id: entry.id,
-      entry_date: entry.entry_date instanceof Date 
-        ? entry.entry_date.toISOString().split('T')[0] 
-        : String(entry.entry_date),
+      entry_date: toYYYYMMDD(entry.entry_date),
       company: entry.company,
       E1in: Number(entry.e1in || 0),
       E1out: Number(entry.e1out || 0),

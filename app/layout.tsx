@@ -102,7 +102,7 @@ export default async function RootLayout({
       <body className={inter.className}>
       <Analytics />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <div className="flex min-h-screen flex-col">
+          <div className="flex min-h-screen flex-col ">
             <MainNav language={lang} />
             <main className="flex-1 p-8">
               {mainContent}

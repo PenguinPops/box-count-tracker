@@ -119,13 +119,13 @@ export default function EntriesTable({
                     placeholder={t(lang, "filterByCompany")}
                     value={filterText}
                     onChange={(e) => setFilterText(e.target.value)}
-                    className="border px-3 py-2 rounded-md w-64"
+                    className="border px-3 py-2 rounded-md w-64 hidden sm:block"
                 />
 
                 <select
                     value={selectedCompany}
                     onChange={(e) => setSelectedCompany(e.target.value)}
-                    className="border px-3 py-2 rounded-md"
+                    className="border px-3 py-2 rounded-md w-auto"
                 >
                     <option value="">{t(lang, "allCompanies")}</option>
                     {companies.map((name, idx) => (

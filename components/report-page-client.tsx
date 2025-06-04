@@ -1,12 +1,10 @@
 'use client'
 
-import { MainNav } from "@/components/nav"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { formatInputDate } from "@/lib/utils"
 import { useState } from "react"
 import { ReportViewer } from "@/components/report-viewer"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -15,6 +13,8 @@ import { Switch } from "@/components/ui/switch"
 
 interface ReportPageClientProps {
     companies: { name: string }[]
+    firstDate: Date
+    lastDate: Date
     earliestDate: Date
     latestDate: Date
     language: Lang
@@ -22,6 +22,8 @@ interface ReportPageClientProps {
 
 export default function ReportPageClient({
     companies,
+    firstDate,
+    lastDate,
     earliestDate,
     latestDate,
     language
@@ -58,6 +60,7 @@ export default function ReportPageClient({
         params.append('includeSummary', includeSummary.toString())
 
         try {
+            console.log("Generating report with params:", params.toString())
             const response = await fetch(`/api/reports?${params.toString()}`)
             if (!response.ok) {
                 throw new Error('Failed to generate report')
@@ -96,32 +99,58 @@ export default function ReportPageClient({
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
-                                <Label htmlFor="startDate">{t(language, "startDate")}</Label>
+                                <Label className="sm:text-lg"htmlFor="startDate">{t(language, "startDate")}</Label>
                                 <Input
                                     id="startDate"
                                     name="startDate"
                                     type="date"
                                     required
-                                    defaultValue={formatDateForInput(earliestDate)}
+                                    defaultValue={formatDateForInput(firstDate)}
                                 />
                             </div>
+                            <div className="flex items-center space-x-2 sm:mt-7">
+                                <Button
+                                    type="button"
+                                    onClick={() => {
+                                        const startDateInput = document.getElementById("startDate") as HTMLInputElement;
+                                        if (startDateInput) {
+                                            startDateInput.value = formatDateForInput(earliestDate);
+                                        }
+                                    }}
+                                >
+                                    {t(language, "setEarliestDate")}
+                                </Button>
+                            </div>
                             <div>
-                                <Label htmlFor="endDate">{t(language, "endDate")}</Label>
+                                <Label className="sm:text-lg"htmlFor="endDate">{t(language, "endDate")}</Label>
                                 <Input
                                     id="endDate"
                                     name="endDate"
                                     type="date"
                                     required
-                                    defaultValue={formatDateForInput(latestDate)}
+                                    defaultValue={formatDateForInput(lastDate)}
                                 />
+                            </div>
+                            <div className="flex items-center space-x-2 sm:mt-7">
+                                <Button
+                                    type="button"
+                                    onClick={() => {
+                                        const startDateInput = document.getElementById("endDate") as HTMLInputElement;
+                                        if (startDateInput) {
+                                            startDateInput.value = formatDateForInput(latestDate);
+                                        }
+                                    }}
+                                >
+                                    {t(language, "setLatestDate")}
+                                </Button>
                             </div>
                         </div>
 
                         {/* Box Types */}
                         <div>
-                            <Label className="mb-2 block">{t(language, "boxTypes")}</Label>
+                            <Label className="mb-2 block text-xl">{t(language, "boxTypes")}</Label>
                             <div className="flex gap-6">
                                 {['E2', 'E1'].map(type => (
                                     <div key={type} className="flex items-center space-x-2">
@@ -131,7 +160,7 @@ export default function ReportPageClient({
                                             value={type}
                                             defaultChecked={type === 'E2'}
                                         />
-                                        <Label htmlFor={type}>{type}</Label>
+                                        <Label className="sm:text-lg"htmlFor={type}>{type}</Label>
                                     </div>
                                 ))}
                             </div>
@@ -141,8 +170,8 @@ export default function ReportPageClient({
 
                         {/* Companies */}
                         <div>
-                            <Label className="mb-2 block">{t(language, "companies")}</Label>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            <Label className="mb-2 block sm:text-lg">{t(language, "companies")}</Label>
+                            <div className="grid grid-cols-1 gap-2">
                                 {companies.map(({ name }) => (
                                     <div key={name} className="flex items-center space-x-2">
                                         <Switch
@@ -151,7 +180,7 @@ export default function ReportPageClient({
                                             value={name}
                                             defaultChecked={name.toLowerCase() === 'publimar'}
                                         />
-                                        <Label htmlFor={name}>{name.charAt(0).toUpperCase() + name.slice(1)}</Label>
+                                        <Label className="sm:text-lg"htmlFor={name}>{name.charAt(0).toUpperCase() + name.slice(1)}</Label>
                                     </div>
                                 ))}
                             </div>
@@ -161,7 +190,7 @@ export default function ReportPageClient({
 
                         {/* Display Mode */}
                         <div>
-                            <Label className="mb-2 block">{t(language, "displayMode")}</Label>
+                            <Label className="mb-2 block sm:text-lg">{t(language, "displayMode")}</Label>
                             <Select value={displayMode} onValueChange={(value: 'balance' | 'raw') => setDisplayMode(value)}>
                                 <SelectTrigger className="w-[300px]">
                                     <SelectValue placeholder={t(language, "selectDisplayMode")} />
@@ -176,25 +205,25 @@ export default function ReportPageClient({
                         <Separator />
 
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="includeParameters">{t(language, "includeParameters")}</Label>
+                            <div className="flex items-center space-x-2">
                                 <Switch
                                     id="includeParameters"
                                     checked={includeParameters}
                                     onCheckedChange={(checked) => setIncludeParameters(checked)}
                                 />
+                                <Label className="sm:text-lg" htmlFor="includeParameters">{t(language, "includeParameters")}</Label>
                             </div>
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="includeEntries">{t(language, "includeEntries")}</Label>
+                            <div className="flex items-center space-x-2">
                                 <Switch
                                     id="includeEntries"
                                     checked={includeEntries}
                                     onCheckedChange={(checked) => setIncludeEntries(checked)}
                                 />
+                                <Label className="sm:text-lg" htmlFor="includeEntries">{t(language, "includeEntries")}</Label>
                             </div>
                             {includeEntries && (
-                                <div className="flex items-center justify-between pl-6">
-                                    <Label htmlFor="entriesDir">{t(language, "entriesOrder")}</Label>
+                                <div className="flex items-center pl-6 space-x-4">
+                                    <Label className="sm:text-lg"htmlFor="entriesDir">{t(language, "entriesOrder")}</Label>
                                     <Select value={entriesDir} onValueChange={(value: 'asc' | 'desc') => setEntriesDir(value)}>
                                         <SelectTrigger className="w-[240px]">
                                             <SelectValue placeholder={t(language, "selectOrder")} />
@@ -206,13 +235,13 @@ export default function ReportPageClient({
                                     </Select>
                                 </div>
                             )}
-                            <div className="flex items-center justify-between">
-                                <Label htmlFor="includeSummary">{t(language, "includeBalanceSummary")}</Label>
+                            <div className="flex items-center space-x-2">
                                 <Switch
                                     id="includeSummary"
                                     checked={includeSummary}
                                     onCheckedChange={(checked) => setIncludeSummary(checked)}
                                 />
+                                <Label className="sm:text-lg"htmlFor="includeSummary">{t(language, "includeBalanceSummary")}</Label>
                             </div>
                         </div>
 

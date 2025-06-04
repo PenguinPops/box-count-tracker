@@ -29,8 +29,10 @@ export default async function ReportPage() {
     return (
         <ReportPageClient
             companies={companies.map(company => ({ name: company.name || "Unknown" }))}
-            earliestDate={firstDayOfLastMonth}
-            latestDate={lastDayOfLastMonth}
+            firstDate={firstDayOfLastMonth}
+            lastDate={lastDayOfLastMonth}
+            earliestDate={typeof earliestDate === "string" ? new Date(earliestDate) : earliestDate || new Date(2000, 0, 1)}
+            latestDate={typeof latestDate === "string" ? new Date(latestDate) : latestDate || new Date()}
             language={language}
         />
     )

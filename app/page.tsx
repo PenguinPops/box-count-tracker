@@ -78,8 +78,8 @@ async function DashboardContent() {
     <>
 
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">{t(language, "dashboardTitle")}</h1>
-        <div className="flex space-x-2">
+        <h1 className="text-3xl font-bold hidden sm:block">{t(language, "dashboardTitle")}</h1>
+        <div className="flex sm:space-x-2 flex-col sm:flex-row space-y-2 sm:space-y-0">
           {session.user.is_admin && (
           <Link href="/entries/new">
             <Button>

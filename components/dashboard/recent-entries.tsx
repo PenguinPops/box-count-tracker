@@ -72,11 +72,11 @@ export const RecentEntries = ({
                         </div>
                     ) : (
                         <div className="text-center py-6">
-                            <p className="text-muted-foreground">No entries yet. Add your first entry to get started.</p>
+                            <p className="text-muted-foreground">{t(language, "noEntriesYet")}</p>
                             <Link href="/entries/new">
                                 <Button variant="outline" className="mt-2">
                                     <PlusCircle className="mr-2 h-4 w-4" />
-                                    Add First Entry
+                                    {t(language, "newEntry")}
                                 </Button>
                             </Link>
                         </div>
@@ -85,7 +85,7 @@ export const RecentEntries = ({
                         <div className="mt-4 flex justify-end">
                             <Link href="/entries">
                                 <Button variant="outline" size="sm">
-                                    View All Entries
+                                    {t(language, "viewAllEntries")}
                                 </Button>
                             </Link>
                         </div>
