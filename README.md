@@ -2,6 +2,10 @@
 
 A complex trakcer system to track boxes with all-encompasing statistics and report generation, built with TypeScript.
 
+## View the site live at
+
+https://v0-next-js-app-ivory.vercel.app/
+
 ## Features
 
 - Add, edit, and delete entries
