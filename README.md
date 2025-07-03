@@ -4,8 +4,8 @@ A complex trakcer system to track boxes with all-encompasing statistics and repo
 
 ## Features
 
-- Add, edit, and delete boxes
-- Track counts and details for each box
+- Add, edit, and delete entries
+- Track counts and details for each entry
 - Clean and user-friendly interface
 - Report generation
 - Statistics overview
