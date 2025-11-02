@@ -29,6 +29,9 @@ export const translations = {
         newCompanyPlaceholder: "New company name",
         add: "Add",
         includeStartingBalancesToggle: "Include Starting Balances in Statistics",
+        editCompany: "Edit company name",
+        saveCompany: "Save company name",
+        cancelEdit: "Cancel edit",
         // dashboard
         dashboardTitle: "Box Count Dashboard",
         newEntry: "New Entry",
@@ -256,6 +259,9 @@ export const translations = {
         newCompanyPlaceholder: "Nazwa nowej firmy",
         add: "Dodaj",
         includeStartingBalancesToggle: "Uwzględnij stany początkowe w statystykach",
+        editCompany: "Edytuj nazwę firmy",
+        saveCompany: "Zapisz nazwę firmy",
+        cancelEdit: "Anuluj edycję",
         // dashboard
         dashboardTitle: "Panel Główny Statystyk Pojemników",
         newEntry: "Nowy wpis",

@@ -26,6 +26,28 @@ export const POST = auth(async function POST(req) {
   }
 })
 
+export const PUT = auth(async function PUT(req) {
+  if (!req.auth) {
+    return NextResponse.json({ message: "Not authenticated" }, { status: 401 })
+  }
+
+  try {
+    const body = await req.json()
+    const { id, name } = body
+    
+    if (!id || !name) {
+      return NextResponse.json({ error: "Company ID and name are required" }, { status: 400 })
+    }
+    
+    await sql`UPDATE companies SET name = ${name} WHERE id = ${id}`
+    revalidatePath("/settings")
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("Error updating company:", error)
+    return NextResponse.json({ error: "Failed to update company" }, { status: 500 })
+  }
+})
+
 export const GET = auth(async function GET(req) {
   if (!req.auth) {
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 })

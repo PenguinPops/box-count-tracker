@@ -16,6 +16,7 @@ import { sign } from "crypto";
 import { SignOut } from "@/components/auth/signout-button";
 import { auth } from "../auth";
 import NotLoggedIn from "@/components/not-logged-in";
+import CompanyCard from "@/components/company-card";
 
 export default async function SettingsPage() {
   const [startingBalances, companies, includeSetting, languageSetting] = await Promise.all([
@@ -168,9 +169,11 @@ export default async function SettingsPage() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {companies.map((company) => (
-                      <div key={company.id} className="p-4 border rounded-md">
-                        <div className="font-medium">{Capitalise(company.name)}</div>
-                      </div>
+                      <CompanyCard 
+                        key={company.id} 
+                        company={{ id: company.id as number, name: company.name as string }} 
+                        language={language} 
+                      />
                     ))}
                   </div>
 
